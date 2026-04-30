@@ -1,0 +1,11 @@
+# built files
+build
+
+# input data
+data
+
+# vscode
+.vscode
+
+# cmake files
+CMakeUserPresets.json
