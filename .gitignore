@@ -2,7 +2,8 @@
 build
 
 # input data
-data
+*.wav
+*.png
 
 # vscode
 .vscode
