@@ -1,5 +1,6 @@
 # built files
 build
+conan 
 
 # input data
 *.wav
@@ -10,3 +11,4 @@ build
 
 # cmake files
 CMakeUserPresets.json
+# CMakePresets.json
