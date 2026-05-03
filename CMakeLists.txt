@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+
 # Find packages
 include(FetchContent)
 FetchContent_Declare(
@@ -15,9 +17,9 @@ FetchContent_Declare(
     URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
 )
 FetchContent_MakeAvailable(nlohmann_json)
-# find_package(SndFile CONFIG REQUIRED)
-# find_package(FFTW3 REQUIRED)
-# find_package(OpenCV REQUIRED)
+find_package(SndFile CONFIG REQUIRED)
+find_package(FFTW3 REQUIRED)
+find_package(OpenCV REQUIRED)
 # find_package(Torch REQUIRED)
 
 # Target names
@@ -29,6 +31,7 @@ add_library(common STATIC
     src/common/Wav.cpp
     src/common/config.cpp
 )
+
 target_include_directories(common PUBLIC
     ${CMAKE_SOURCE_DIR}/src/common
 )
@@ -37,25 +40,24 @@ target_include_directories(common PUBLIC
 add_executable(${CLIPGEN}
     src/clipgen/main.cpp
     src/common/json.hpp
-    )
+)
     
 add_executable(${CLIPCLASS}
     src/clipclass/main.cpp
     src/common/json.hpp
 )
 
-target_link_libraries(
-    common 
-    PRIVATE 
+target_link_libraries(common PUBLIC 
     nlohmann_json::nlohmann_json
+    SndFile::sndfile
+    FFTW3::fftw3
+    ${OpenCV_LIBS}
 )
 
 target_link_libraries(${CLIPGEN}  PRIVATE 
     common
-    nlohmann_json::nlohmann_json
 )
     
 target_link_libraries(${CLIPCLASS} PRIVATE 
     common
-    nlohmann_json::nlohmann_json
 )

@@ -1,6 +1,6 @@
 {
-    "min_freq": 10000,
-    "max_freq": 24000,
+    "spec_min_freq": 10000,
+    "spec_max_freq": 24000,
     "window_size": 1024,
     "overlap_size": 768,
     "event_size": 12

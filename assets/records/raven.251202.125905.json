@@ -1,8 +1,6 @@
 {
-    "settings": {
-        "path": "assets/records/raven.251202.104855.wav",
-        "name": "251202104855"
-    },
+    "rec_path": "../assets/records/raven.251202.104855.wav",
+    "rec_name": "251202104855",
     "courtship": [
         {
             "start_time": 353.144179,
@@ -409,7 +407,7 @@
             "end_time": 430.644005
         }
     ],
-    "non_courtship": [
+    "noise": [
         {
             "start_time": 33.545650,
             "end_time": 33.595495

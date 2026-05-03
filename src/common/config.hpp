@@ -5,9 +5,10 @@
 #include "json.hpp"
 
 struct Config {
-    int minFreq;
-    int maxFreq;
+    int specMinFreq;
+    int specMaxFreq;
     int windowSize;
+    int hopSize;
     int overlapSize;
     int eventSize;
 };
