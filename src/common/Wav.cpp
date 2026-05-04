@@ -18,34 +18,22 @@ double complex2magnitude(fftw_complex complex_number)
 
 bool Wav::getSpec()
 {
-    std::vector<std::vector<double>> data_spec(this->getNumTFrames(), std::vector<double>(this->getNumBins(), 0.0));
+    std::vector<std::vector<double>> data_spec(this->getNumTimeFrames(), std::vector<double>(this->getNumFreqBins(), 0.0));
     std::vector<double> smoothing_window = hanning_window(gConfig.windowSize);
 
     double *in = (double *)fftw_malloc(sizeof(double) * gConfig.windowSize);
-    fftw_complex *out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * this->getNumBins());
+    fftw_complex *out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * this->getNumFreqBins());
     fftw_plan plan = fftw_plan_dft_r2c_1d(gConfig.windowSize, in, out, FFTW_ESTIMATE);
 
     // sample_index - index of the first sample in the current window
-    for (int sample_index = 0; sample_index + gConfig.windowSize <= this->getWavFrames(); sample_index += gConfig.hopSize)
+    for (int sample_index = 0; sample_index + gConfig.windowSize <= this->mSoundData.size(); sample_index += gConfig.hopSize)
     {
         // Fill input buffer with windowed samples, averaging across channels
-        // for (int i = 0; i < gConfig.windowSize; ++i)
-        // {
-        //     double sample_value = 0.0;
-        //     // Only first channel.
-        //     for (int ch = 0; ch < this->getWavChannels(); ++ch)
-        //     {
-        //         if (ch == this->getWavChannels())
-        //             continue;
-        //         sample_value += mSoundData[(sample_index + i) * this->getWavChannels() + ch];
-        //     }
-        //     in[i] = sample_value * smoothing_window[i];
-        // }
         for (int i = 0; i < gConfig.windowSize; ++i)
         {
             try
             {
-                double sample_value = mSoundData.at(sample_index + i); // no channel offset needed
+                double sample_value = mSoundData.at(sample_index + i + 0); // no channel offset needed
                 in[i] = sample_value * smoothing_window[i];
             }
             catch (const std::out_of_range &e)
@@ -59,7 +47,7 @@ bool Wav::getSpec()
         fftw_execute(plan);
 
         // Extract magnitude for each frequency bin
-        for (int bin = 0; bin < this->getNumBins(); ++bin)
+        for (int bin = 0; bin < this->getNumFreqBins(); ++bin)
             data_spec[sample_index / gConfig.hopSize][bin] = 20 * log10(complex2magnitude(out[bin]) + 1e-2);
     }
 
@@ -71,8 +59,6 @@ bool Wav::getSpec()
     double minVal = std::numeric_limits<double>::infinity();
     double maxVal = -std::numeric_limits<double>::infinity();
 
-    this->spec = cv::Mat(this->getNumTFrames(), this->getNumBins(), CV_32F, cv::Scalar(0.0));
-
     for (const auto &frame : data_spec)
         for (double v : frame)
         {
@@ -80,12 +66,11 @@ bool Wav::getSpec()
             maxVal = std::max(maxVal, v);
         }
 
-    // cv::Mat mat(wav.getMSpectrogram()[0].size(), wav.getMSpectrogram().size(), CV_32F);
-    cv::Mat mat(this->getNumBins(), this->getNumTFrames(), CV_32F);
+    cv::Mat mat(this->getNumFreqBins(), this->getNumTimeFrames(), CV_32F);
 
-    for (int i = 0; i < this->getNumTFrames(); i++)
+    for (int i = 0; i < this->getNumTimeFrames(); i++)
     {
-        for (int j = 0; j < this->getNumBins(); j++)
+        for (int j = 0; j < this->getNumFreqBins(); j++)
         {
             double norm = (data_spec[i][j] - minVal) / (maxVal - minVal);
             mat.at<float>(j, i) = (float)(norm * 255);
@@ -94,14 +79,14 @@ bool Wav::getSpec()
 
     cv::flip(mat, mat, 0);
 
-    double minBin = (double)this->getWavMinFreq() / (double)this->getWavMaxFreq() * (double)this->getNumBins();
-    double maxBin = (double)this->getWavMaxFreq() / (double)this->getWavMaxFreq() * (double)this->getNumBins();
+    double minBin = (double)this->getWavMinFreq() / (double)this->getWavMaxFreq() * (double)this->getNumFreqBins();
+    double maxBin = (double)this->getWavMaxFreq() / (double)this->getWavMaxFreq() * (double)this->getNumFreqBins();
     int startRow = std::max(0, (int)std::floor(minBin));
-    int endRow = std::min(this->getNumBins(), (int)std::ceil(maxBin));
+    int endRow = std::min(this->getNumFreqBins(), (int)std::ceil(maxBin));
 
-    mat = mat.rowRange(this->getNumBins() - endRow, this->getNumBins() - startRow);
+    mat = mat.rowRange(this->getNumFreqBins() - endRow, this->getNumFreqBins() - startRow);
 
-    cv::imwrite("./spec.png", mat);
+    cv::imwrite("../spec.png", mat);
 
     return true;
 }
@@ -143,8 +128,8 @@ Wav::Wav(const std::string &rPath)
     // Set parameters for computing the spectrogram
     this->setSamplerate(wav_info.samplerate);
     this->setFreqRes(wav_info.samplerate / gConfig.windowSize);
-    this->setNumBins(this->getFreqRes() / 2 + 1);
-    this->setNumTFrames((wav_info.frames - gConfig.windowSize) / gConfig.hopSize + 1);
+    this->setNumFreqBins(gConfig.windowSize / 2 + 1);
+    this->setNumTimeFrames((wav_info.frames - gConfig.windowSize) / gConfig.hopSize + 1);
 
     this->setWavMinFreq(0);
     this->setWavMaxFreq(wav_info.samplerate / 2);
@@ -152,8 +137,8 @@ Wav::Wav(const std::string &rPath)
     this->setWavChannels(wav_info.channels);
     this->setDuration(wav_info.frames / wav_info.samplerate);
 
-    mSoundData.resize(wav_info.frames);
-    for (int i = 0; i < wav_info.frames; ++i)
+    mSoundData.resize(wav_info.frames / wav_info.channels);
+    for (int i = 0; i < wav_info.frames / wav_info.channels; ++i)
     {
         mSoundData[i] = wav_data[i * wav_info.channels + 0]; // extract channel 0 only
     }

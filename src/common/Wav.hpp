@@ -24,8 +24,8 @@ private:
     
     int mSampleRate;
     int mFreqRes;
-    int mNumBins;
-    int mNumTFrames;
+    int mNumFreqBins;
+    int mNumTimeFrames;
     
     int mWavMinFreq;
     int mWavMaxFreq;
@@ -54,10 +54,10 @@ public:
     int getSamplerate() const { return mSampleRate; }
     void setFreqRes(int freqRes) { mFreqRes = freqRes; }
     int getFreqRes() const { return mFreqRes; }
-    void setNumBins(int numBins) { mNumBins = numBins; }
-    int getNumBins() const { return mNumBins; }
-    void setNumTFrames(int numTFrames) { mNumTFrames = numTFrames; }
-    int getNumTFrames() const { return mNumTFrames; }
+    void setNumFreqBins(int numBins) { mNumFreqBins = numBins; }
+    int getNumFreqBins() const { return mNumFreqBins; }
+    void setNumTimeFrames(int numTFrames) { mNumTimeFrames = numTFrames; }
+    int getNumTimeFrames() const { return mNumTimeFrames; }
 
     void setWavMinFreq(int minFreq) { mWavMinFreq = minFreq; }
     int getWavMinFreq() const { return mWavMinFreq; }
