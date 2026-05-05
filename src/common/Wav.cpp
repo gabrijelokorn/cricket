@@ -33,7 +33,7 @@ bool Wav::getSpec()
         {
             try
             {
-                double sample_value = mSoundData.at(sample_index + i + 0); // no channel offset needed
+                double sample_value = this->mSoundData.at(sample_index + i + 0); // No channel offset needed
                 in[i] = sample_value * smoothing_window[i];
             }
             catch (const std::out_of_range &e)
@@ -48,7 +48,7 @@ bool Wav::getSpec()
 
         // Extract magnitude for each frequency bin
         for (int bin = 0; bin < this->getNumFreqBins(); ++bin)
-            data_spec[sample_index / gConfig.hopSize][bin] = 20 * log10(complex2magnitude(out[bin]) + 1e-2);
+            data_spec[sample_index / gConfig.hopSize][bin] = log10(complex2magnitude(out[bin]) + 1e-2); // Add small value to avoid log(
     }
 
     // // Cleanup
@@ -76,15 +76,14 @@ bool Wav::getSpec()
             mat.at<float>(j, i) = (float)(norm * 255);
         }
     }
-
     cv::flip(mat, mat, 0);
 
-    double minBin = (double)this->getWavMinFreq() / (double)this->getWavMaxFreq() * (double)this->getNumFreqBins();
-    double maxBin = (double)this->getWavMaxFreq() / (double)this->getWavMaxFreq() * (double)this->getNumFreqBins();
+    double minBin = (double)gConfig.specMinFreq / (double)this->getWavMaxFreq() * (double)this->getNumFreqBins();
     int startRow = std::max(0, (int)std::floor(minBin));
+    double maxBin = (double)gConfig.specMaxFreq / (double)this->getWavMaxFreq() * (double)this->getNumFreqBins();
     int endRow = std::min(this->getNumFreqBins(), (int)std::ceil(maxBin));
 
-    mat = mat.rowRange(this->getNumFreqBins() - endRow, this->getNumFreqBins() - startRow);
+    // mat = mat.rowRange(this->getNumFreqBins() - endRow, this->getNumFreqBins() - startRow);
 
     cv::imwrite("../spec.png", mat);
 
@@ -137,9 +136,9 @@ Wav::Wav(const std::string &rPath)
     this->setWavChannels(wav_info.channels);
     this->setDuration(wav_info.frames / wav_info.samplerate);
 
-    mSoundData.resize(wav_info.frames / wav_info.channels);
-    for (int i = 0; i < wav_info.frames / wav_info.channels; ++i)
+    this->mSoundData.resize(wav_info.frames);
+    for (int i = 0; i < this->mSoundData.size(); ++i)
     {
-        mSoundData[i] = wav_data[i * wav_info.channels + 0]; // extract channel 0 only
+        this->mSoundData[i] = wav_data[i * wav_info.channels + 1];
     }
 }
