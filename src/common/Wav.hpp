@@ -21,12 +21,12 @@ class Wav
 private:
     std::string mRecPath;
     std::string mRecName;
-    
+
     int mSampleRate;
     int mFreqRes;
     int mNumFreqBins;
     int mNumTimeFrames;
-    
+
     int mWavMinFreq;
     int mWavMaxFreq;
     int mWavFrames;
@@ -39,15 +39,16 @@ private:
 
     std::vector<TimeInterval> mCourtship;
     std::vector<TimeInterval> mNoise;
+
 public:
     Wav() = default;
     ~Wav() = default;
 
-    Wav(const std::string& rPath);
+    Wav(const std::string &rPath);
 
-    void setRecPath(const std::string& recPath) { mRecPath = recPath; }
+    void setRecPath(const std::string &recPath) { mRecPath = recPath; }
     std::string getRecPath() const { return mRecPath; }
-    void setRecName(const std::string& recName) { mRecName = recName; }
+    void setRecName(const std::string &recName) { mRecName = recName; }
     std::string getRecName() const { return mRecName; }
 
     void setSamplerate(int sampleRate) { mSampleRate = sampleRate; }
@@ -70,6 +71,8 @@ public:
     void setDuration(int duration) { mDuration = duration; }
     int getDuration() const { return mDuration; }
 
+    double getFreqBin(double freq);
+    double getTimeFrame(double ms);
     bool getSpec();
 };
 

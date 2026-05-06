@@ -16,6 +16,14 @@ double complex2magnitude(fftw_complex complex_number)
     return sqrt(complex_number[0] * complex_number[0] + complex_number[1] * complex_number[1]);
 }
 
+double Wav::getFreqBin(double freq) {
+    return (freq / (double)this->getWavMaxFreq()) * (double)this->getNumFreqBins();
+}
+
+double Wav::getTimeFrame(double ms) {
+    
+}
+
 bool Wav::getSpec()
 {
     std::vector<std::vector<double>> data_spec(this->getNumTimeFrames(), std::vector<double>(this->getNumFreqBins(), 0.0));
@@ -78,13 +86,10 @@ bool Wav::getSpec()
     }
     cv::flip(mat, mat, 0);
 
-    double minBin = (double)gConfig.specMinFreq / (double)this->getWavMaxFreq() * (double)this->getNumFreqBins();
-    int startRow = std::max(0, (int)std::floor(minBin));
-    double maxBin = (double)gConfig.specMaxFreq / (double)this->getWavMaxFreq() * (double)this->getNumFreqBins();
-    int endRow = std::min(this->getNumFreqBins(), (int)std::ceil(maxBin));
+    int startRow = std::max(0, (int)std::floor(this->getFreqBin(gConfig.specMinFreq)));
+    int endRow = std::min(this->getNumFreqBins(), (int)std::ceil(this->getFreqBin(gConfig.specMaxFreq)));
 
-    // mat = mat.rowRange(this->getNumFreqBins() - endRow, this->getNumFreqBins() - startRow);
-
+    
     cv::imwrite("../spec.png", mat);
 
     return true;
