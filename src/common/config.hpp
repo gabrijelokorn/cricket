@@ -11,6 +11,9 @@ struct Config {
     int hopSize;
     int overlapSize;
     int eventSize;
+    std::string recordsPath;
+    std::string courtshipClipsPath;
+    std::string noiseClipsPath;
 };
 
 // Declare — exists somewhere, usable everywhere

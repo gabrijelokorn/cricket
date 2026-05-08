@@ -22,20 +22,19 @@ private:
     std::string mRecPath;
     std::string mRecName;
 
-    int mSampleRate;
-    int mFreqRes;
-    int mNumFreqBins;
-    int mNumTimeFrames;
-
+    int mWavSampleRate;
+    int mWavFreqRes;
+    int mWavNumFreqBins;
+    int mWavNumTimeFrames;
     int mWavMinFreq;
     int mWavMaxFreq;
     int mWavFrames;
     int mWavChannels;
-    int mDuration;
+    int mWavDuration;
 
     // wav data
     std::vector<double> mSoundData;
-    cv::Mat spec;
+    cv::Mat mSpec;
 
     std::vector<TimeInterval> mCourtship;
     std::vector<TimeInterval> mNoise;
@@ -51,14 +50,14 @@ public:
     void setRecName(const std::string &recName) { mRecName = recName; }
     std::string getRecName() const { return mRecName; }
 
-    void setSamplerate(int sampleRate) { mSampleRate = sampleRate; }
-    int getSamplerate() const { return mSampleRate; }
-    void setFreqRes(int freqRes) { mFreqRes = freqRes; }
-    int getFreqRes() const { return mFreqRes; }
-    void setNumFreqBins(int numBins) { mNumFreqBins = numBins; }
-    int getNumFreqBins() const { return mNumFreqBins; }
-    void setNumTimeFrames(int numTFrames) { mNumTimeFrames = numTFrames; }
-    int getNumTimeFrames() const { return mNumTimeFrames; }
+    void setWavSamplerate(int sampleRate) { mWavSampleRate = sampleRate; }
+    int getWavSamplerate() const { return mWavSampleRate; }
+    void setWavFreqRes(int freqRes) { mWavFreqRes = freqRes; }
+    int getWavFreqRes() const { return mWavFreqRes; }
+    void setWavNumFreqBins(int numBins) { mWavNumFreqBins = numBins; }
+    int getWavNumFreqBins() const { return mWavNumFreqBins; }
+    void setWavNumTimeFrames(int numTFrames) { mWavNumTimeFrames = numTFrames; }
+    int getWavNumTimeFrames() const { return mWavNumTimeFrames; }
 
     void setWavMinFreq(int minFreq) { mWavMinFreq = minFreq; }
     int getWavMinFreq() const { return mWavMinFreq; }
@@ -68,11 +67,18 @@ public:
     int getWavFrames() const { return mWavFrames; }
     void setWavChannels(int channels) { mWavChannels = channels; }
     int getWavChannels() const { return mWavChannels; }
-    void setDuration(int duration) { mDuration = duration; }
-    int getDuration() const { return mDuration; }
+    void setWavDuration(int duration) { mWavDuration = duration; }
+    int getWavDuration() const { return mWavDuration; }
+
+    std::vector<TimeInterval> getCourtship() const { return mCourtship; }
+    std::vector<TimeInterval> getNoise() const { return mNoise; }
+
+    int getTimeFrame(double ms);
+    void clip(TimeInterval t, const std::string rPath);
+    void clipCourtship();
+    void clipNoise();
 
     double getFreqBin(double freq);
-    double getTimeFrame(double ms);
     bool getSpec();
 };
 

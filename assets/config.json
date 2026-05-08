@@ -3,5 +3,8 @@
     "spec_max_freq": 24000,
     "window_size": 1024,
     "overlap_size": 768,
-    "event_size": 12
+    "event_size": 12,
+    "records_path": "../assets/records",
+    "courtship_clips_path": "../assets/clips/courtship",
+    "noise_clips_path": "../assets/clips/noise"
 }

@@ -7,6 +7,7 @@ project(cricket VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
+set(NFD_PORTAL ON CACHE BOOL "" FORCE)  # add this BEFORE FetchContent_MakeAvailable
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 
@@ -17,6 +18,12 @@ FetchContent_Declare(
     URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
 )
 FetchContent_MakeAvailable(nlohmann_json)
+FetchContent_Declare(
+    nfd
+    GIT_REPOSITORY https://github.com/btzy/nativefiledialog-extended.git
+    GIT_TAG        master
+)
+FetchContent_MakeAvailable(nfd)
 find_package(SndFile CONFIG REQUIRED)
 find_package(FFTW3 REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -30,6 +37,7 @@ set(CLIPCLASS clipclass)
 add_library(common STATIC
     src/common/Wav.cpp
     src/common/config.cpp
+    src/common/gather.cpp
 )
 
 target_include_directories(common PUBLIC
@@ -52,6 +60,7 @@ target_link_libraries(common PUBLIC
     SndFile::sndfile
     FFTW3::fftw3
     ${OpenCV_LIBS}
+    nfd::nfd
 )
 
 target_link_libraries(${CLIPGEN}  PRIVATE 

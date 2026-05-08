@@ -16,21 +16,69 @@ double complex2magnitude(fftw_complex complex_number)
     return sqrt(complex_number[0] * complex_number[0] + complex_number[1] * complex_number[1]);
 }
 
-double Wav::getFreqBin(double freq) {
-    return (freq / (double)this->getWavMaxFreq()) * (double)this->getNumFreqBins();
+double Wav::getFreqBin(double freq)
+{
+    return (freq / (double)this->getWavMaxFreq()) * (double)this->getWavNumFreqBins();
 }
 
-double Wav::getTimeFrame(double ms) {
-    
+int Wav::getTimeFrame(double ms)
+{
+    return ms / (double)this->getWavDuration() * (double)this->mSpec.cols;
+}
+
+void Wav::clip(TimeInterval t, const std::string rPath)
+{
+    int startFrame = getTimeFrame(std::floor(t.start));
+    int endFrame = getTimeFrame(std::ceil(t.end));
+
+    if (endFrame - startFrame <= gConfig.eventSize)
+    {
+        int diff = gConfig.eventSize - (endFrame - startFrame);
+        int padLeft = diff / 2;
+        int padRight = diff - padLeft; // takes the extra 1 if diff is odd
+
+        startFrame -= padLeft;
+        endFrame += padRight;
+    }
+    else
+    {
+        int diff = (endFrame - startFrame) - gConfig.eventSize;
+        int trimLeft = diff / 2;
+        int trimRight = diff - trimLeft;
+
+        startFrame += trimLeft;
+        endFrame -= trimRight;
+    }
+
+    startFrame = std::max(0, startFrame);
+    endFrame = std::min(this->mSpec.cols, endFrame);
+
+    cv::Mat clip = this->mSpec.colRange(startFrame, endFrame);
+    cv::imwrite(rPath, clip);
+}
+
+void Wav::clipCourtship()
+{
+    for (TimeInterval t : this->mCourtship){
+        clip(t, gConfig.courtshipClipsPath + "/" + this->mRecName + "_" + std::to_string(t.start) + "-" + std::to_string(t.end) + ".png");
+    }
+}
+
+void Wav::clipNoise()
+{
+    for (TimeInterval t : this->mNoise)
+    {
+        clip(t, gConfig.noiseClipsPath);
+    }
 }
 
 bool Wav::getSpec()
 {
-    std::vector<std::vector<double>> data_spec(this->getNumTimeFrames(), std::vector<double>(this->getNumFreqBins(), 0.0));
+    std::vector<std::vector<double>> data_spec(this->getWavNumTimeFrames(), std::vector<double>(this->getWavNumFreqBins(), 0.0));
     std::vector<double> smoothing_window = hanning_window(gConfig.windowSize);
 
     double *in = (double *)fftw_malloc(sizeof(double) * gConfig.windowSize);
-    fftw_complex *out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * this->getNumFreqBins());
+    fftw_complex *out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * this->getWavNumFreqBins());
     fftw_plan plan = fftw_plan_dft_r2c_1d(gConfig.windowSize, in, out, FFTW_ESTIMATE);
 
     // sample_index - index of the first sample in the current window
@@ -55,7 +103,7 @@ bool Wav::getSpec()
         fftw_execute(plan);
 
         // Extract magnitude for each frequency bin
-        for (int bin = 0; bin < this->getNumFreqBins(); ++bin)
+        for (int bin = 0; bin < this->getWavNumFreqBins(); ++bin)
             data_spec[sample_index / gConfig.hopSize][bin] = log10(complex2magnitude(out[bin]) + 1e-2); // Add small value to avoid log(
     }
 
@@ -74,24 +122,23 @@ bool Wav::getSpec()
             maxVal = std::max(maxVal, v);
         }
 
-    cv::Mat mat(this->getNumFreqBins(), this->getNumTimeFrames(), CV_32F);
+    this->mSpec.create(std::vector<int>{this->getWavNumFreqBins(), this->getWavNumTimeFrames()}, CV_32F);
 
-    for (int i = 0; i < this->getNumTimeFrames(); i++)
+    for (int i = 0; i < this->getWavNumTimeFrames(); i++)
     {
-        for (int j = 0; j < this->getNumFreqBins(); j++)
+        for (int j = 0; j < this->getWavNumFreqBins(); j++)
         {
             double norm = (data_spec[i][j] - minVal) / (maxVal - minVal);
-            mat.at<float>(j, i) = (float)(norm * 255);
+            this->mSpec.at<float>(j, i) = (float)(norm * 255);
         }
     }
-    cv::flip(mat, mat, 0);
+    cv::flip(this->mSpec, this->mSpec, 0);
 
     int startRow = std::max(0, (int)std::floor(this->getFreqBin(gConfig.specMinFreq)));
-    int endRow = std::min(this->getNumFreqBins(), (int)std::ceil(this->getFreqBin(gConfig.specMaxFreq)));
+    int endRow = std::min(this->getWavNumFreqBins(), (int)std::ceil(this->getFreqBin(gConfig.specMaxFreq)));
+    this->mSpec(cv::Range(this->getWavNumFreqBins() - endRow, this->getWavNumFreqBins() - startRow), cv::Range::all()).copyTo(this->mSpec);
 
-    
-    cv::imwrite("../spec.png", mat);
-
+    cv::imwrite("../assets/" + this->getRecName() + ".png", this->mSpec);
     return true;
 }
 
@@ -130,16 +177,16 @@ Wav::Wav(const std::string &rPath)
     sf_close(wav_file);
 
     // Set parameters for computing the spectrogram
-    this->setSamplerate(wav_info.samplerate);
-    this->setFreqRes(wav_info.samplerate / gConfig.windowSize);
-    this->setNumFreqBins(gConfig.windowSize / 2 + 1);
-    this->setNumTimeFrames((wav_info.frames - gConfig.windowSize) / gConfig.hopSize + 1);
+    this->setWavSamplerate(wav_info.samplerate);
+    this->setWavFreqRes(wav_info.samplerate / gConfig.windowSize);
+    this->setWavNumFreqBins(gConfig.windowSize / 2 + 1);
+    this->setWavNumTimeFrames((wav_info.frames - gConfig.windowSize) / gConfig.hopSize + 1);
 
     this->setWavMinFreq(0);
     this->setWavMaxFreq(wav_info.samplerate / 2);
     this->setWavFrames(wav_info.frames);
     this->setWavChannels(wav_info.channels);
-    this->setDuration(wav_info.frames / wav_info.samplerate);
+    this->setWavDuration(wav_info.frames / wav_info.samplerate);
 
     this->mSoundData.resize(wav_info.frames);
     for (int i = 0; i < this->mSoundData.size(); ++i)

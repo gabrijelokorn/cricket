@@ -11,6 +11,9 @@ bool loadConfig(const char* path) {
         gConfig.overlapSize = j.at("overlap_size").get<int>();
         gConfig.eventSize = j.at("event_size").get<int>();
         gConfig.hopSize = gConfig.windowSize - gConfig.overlapSize;
+        gConfig.recordsPath = j.at("records_path").get<std::string>();
+        gConfig.courtshipClipsPath = j.at("courtship_clips_path").get<std::string>();
+        gConfig.noiseClipsPath = j.at("noise_clips_path").get<std::string>();
         return true;
     } catch (const std::exception &e) {
         std::cerr << "Error loading config: " << e.what() << std::endl;
