@@ -28,8 +28,8 @@ int Wav::getTimeFrame(double ms)
 
 void Wav::clip(TimeInterval t, const std::string rPath)
 {
-    int startFrame = getTimeFrame(std::floor(t.start));
-    int endFrame = getTimeFrame(std::ceil(t.end));
+    int startFrame = std::floor(getTimeFrame(t.start));
+    int endFrame = std::ceil(getTimeFrame(t.end));
 
     if (endFrame - startFrame <= gConfig.eventSize)
     {
@@ -68,7 +68,7 @@ void Wav::clipNoise()
 {
     for (TimeInterval t : this->mNoise)
     {
-        clip(t, gConfig.noiseClipsPath);
+        clip(t, gConfig.noiseClipsPath + "/" + this->mRecName + "_" + std::to_string(t.start) + "-" + std::to_string(t.end) + ".png");
     }
 }
 
@@ -138,7 +138,6 @@ bool Wav::getSpec()
     int endRow = std::min(this->getWavNumFreqBins(), (int)std::ceil(this->getFreqBin(gConfig.specMaxFreq)));
     this->mSpec(cv::Range(this->getWavNumFreqBins() - endRow, this->getWavNumFreqBins() - startRow), cv::Range::all()).copyTo(this->mSpec);
 
-    cv::imwrite("../assets/" + this->getRecName() + ".png", this->mSpec);
     return true;
 }
 
