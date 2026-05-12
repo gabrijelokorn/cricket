@@ -17,6 +17,7 @@ int main()
     for (Wav w : spectrograms)
     {
         w.clipCourtship();
+        w.clipNoise();
     }
 
     // Wav wav = Wav("../assets/records/raven.251202.125905.json");
