@@ -133,6 +133,13 @@ def train():
     print(f"\nDone. Best validation accuracy: {best_val_acc:.1%}")
     print("Model saved to cricket_model.pth")
 
+    # ── Export for C++ ────────────────────────────────────────────────
+    model.load_state_dict(torch.load("cricket_model.pth"))  # load best weights
+    model.eval()
+    dummy = torch.randn(1, 1, 300, 16)
+    scripted = torch.jit.trace(model, dummy)
+    scripted.save("cricket_model_traced.pt")
+    print("Exported to cricket_model_traced.pt")
 
 if __name__ == "__main__":
     train()

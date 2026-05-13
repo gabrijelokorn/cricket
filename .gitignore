@@ -12,3 +12,7 @@ conan
 # cmake files
 CMakeUserPresets.json
 # CMakePresets.json
+
+# AI models
+/**/*.pth
+/**/*.pt
