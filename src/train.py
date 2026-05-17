@@ -134,12 +134,12 @@ def train():
     print("Model saved to cricket_model.pth")
 
     # ── Export for C++ ────────────────────────────────────────────────
-    model.load_state_dict(torch.load("cricket_model.pth"))  # load best weights
+    model.load_state_dict(torch.load("cricket.pth"))  # load best weights
     model.eval()
     dummy = torch.randn(1, 1, 300, 16)
     scripted = torch.jit.trace(model, dummy)
-    scripted.save("cricket_model_traced.pt")
-    print("Exported to cricket_model_traced.pt")
+    scripted.save("cricket.pt")
+    print("Exported to cricket.pt")
 
 if __name__ == "__main__":
     train()

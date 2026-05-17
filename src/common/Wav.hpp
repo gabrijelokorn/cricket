@@ -74,7 +74,10 @@ public:
     std::vector<TimeInterval> getNoise() const { return mNoise; }
 
     int getTimeFrame(double ms);
-    void clip(TimeInterval t, const std::string rPath);
+    TimeInterval reframeTimeInterval(TimeInterval ti);
+    void exportClip(cv::Mat clip, const std::string rPath);
+    cv::Mat getClipByTime(TimeInterval t);
+    cv::Mat getClipByFrame(int f);
     void clipCourtship();
     void clipNoise();
 

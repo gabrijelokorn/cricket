@@ -7,6 +7,7 @@ project(cricket VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_PREFIX_PATH "/home/gabrijel/libs/libtorch")
 set(NFD_PORTAL ON CACHE BOOL "" FORCE)  # add this BEFORE FetchContent_MakeAvailable
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
@@ -27,7 +28,7 @@ FetchContent_MakeAvailable(nfd)
 find_package(SndFile CONFIG REQUIRED)
 find_package(FFTW3 REQUIRED)
 find_package(OpenCV REQUIRED)
-# find_package(Torch REQUIRED)
+find_package(Torch REQUIRED)
 
 # Target names
 set(CLIPGEN  clipgen)
@@ -61,6 +62,7 @@ target_link_libraries(common PUBLIC
     FFTW3::fftw3
     ${OpenCV_LIBS}
     nfd::nfd
+    ${TORCH_LIBRARIES}
 )
 
 target_link_libraries(${CLIPGEN}  PRIVATE 

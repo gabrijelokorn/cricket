@@ -20,8 +20,5 @@ int main()
         w.clipNoise();
     }
 
-    // Wav wav = Wav("../assets/records/raven.251202.125905.json");
-    // wav.getSpec();
-
     return 1;
 }

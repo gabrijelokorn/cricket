@@ -26,10 +26,18 @@ int Wav::getTimeFrame(double ms)
     return ms / (double)this->getWavDuration() * (double)this->mSpec.cols;
 }
 
-void Wav::clip(TimeInterval t, const std::string rPath)
+void Wav::exportClip(cv::Mat clip, const std::string rPath)
 {
-    int startFrame = std::floor(getTimeFrame(t.start));
-    int endFrame = std::ceil(getTimeFrame(t.end));
+    cv::imwrite(rPath, clip);
+}
+
+TimeInterval Wav::reframeTimeInterval(TimeInterval ti)
+{
+    if (!gConfig.eventSize)
+        return ti;
+        
+    int startFrame = std::floor(getTimeFrame(ti.start));
+    int endFrame = std::ceil(getTimeFrame(ti.end));
 
     if (endFrame - startFrame <= gConfig.eventSize)
     {
@@ -53,14 +61,29 @@ void Wav::clip(TimeInterval t, const std::string rPath)
     startFrame = std::max(0, startFrame);
     endFrame = std::min(this->mSpec.cols, endFrame);
 
-    cv::Mat clip = this->mSpec.colRange(startFrame, endFrame);
-    cv::imwrite(rPath, clip);
+    return TimeInterval{(double)startFrame, (double)endFrame};
+}
+
+cv::Mat Wav::getClipByTime(TimeInterval ti)
+{
+    TimeInterval clipTi = this->reframeTimeInterval(ti);
+    cv::Mat clip = this->mSpec.colRange(clipTi.start, clipTi.end);
+
+    return clip;
+}
+
+cv::Mat Wav::getClipByFrame(int f)
+{
+    cv::Mat clip = this->mSpec.colRange(f, f + gConfig.eventSize);
+    return clip;
 }
 
 void Wav::clipCourtship()
 {
-    for (TimeInterval t : this->mCourtship){
-        clip(t, gConfig.courtshipClipsPath + "/" + this->mRecName + "_" + std::to_string(t.start) + "-" + std::to_string(t.end) + ".png");
+    for (TimeInterval t : this->mCourtship)
+    {
+        cv::Mat clip = getClipByTime(t);
+        this->exportClip(clip, gConfig.courtshipClipsPath + "/" + this->mRecName + "_" + std::to_string(t.start) + "-" + std::to_string(t.end) + ".png");
     }
 }
 
@@ -68,7 +91,8 @@ void Wav::clipNoise()
 {
     for (TimeInterval t : this->mNoise)
     {
-        clip(t, gConfig.noiseClipsPath + "/" + this->mRecName + "_" + std::to_string(t.start) + "-" + std::to_string(t.end) + ".png");
+        cv::Mat clip = getClipByTime(t);
+        this->exportClip(clip, gConfig.noiseClipsPath + "/" + this->mRecName + "_" + std::to_string(t.start) + "-" + std::to_string(t.end) + ".png");
     }
 }
 
