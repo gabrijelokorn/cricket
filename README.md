@@ -1,5 +1,5 @@
 # Cricket
-Software to recognize courtship sounds from nature recordings.
+Software to recognize cricket courtship sounds from nature recordings.
 
 ## Example of recognized courtships sounds
  - Picutre below shows spectrogram of audio recording.
