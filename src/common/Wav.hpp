@@ -73,6 +73,7 @@ public:
     std::vector<TimeInterval> getCourtship() const { return mCourtship; }
     std::vector<TimeInterval> getNoise() const { return mNoise; }
 
+    double specTimeFrameToMs(int frame);
     int getTimeFrame(double ms);
     TimeInterval reframeTimeInterval(TimeInterval ti);
     void exportClip(cv::Mat clip, const std::string rPath);
@@ -83,6 +84,8 @@ public:
 
     double getFreqBin(double freq);
     bool getSpec();
+
+    cv::Mat getMSpec() { return this->mSpec; }
 };
 
 #endif // WAV_HPP

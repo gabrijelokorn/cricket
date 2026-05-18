@@ -127,11 +127,11 @@ def train():
         # Save the best model seen so far
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), "cricket_model.pth")
+            torch.save(model.state_dict(), "cricket.pth")
             print(f"           ✓ new best saved ({val_acc:.1%})")
 
     print(f"\nDone. Best validation accuracy: {best_val_acc:.1%}")
-    print("Model saved to cricket_model.pth")
+    print("Model saved to cricket.pth")
 
     # ── Export for C++ ────────────────────────────────────────────────
     model.load_state_dict(torch.load("cricket.pth"))  # load best weights

@@ -4,6 +4,7 @@
     "window_size": 1024,
     "overlap_size": 768,
     "event_size": 16,
+    "event_step": 4,
     "records_path": "../assets/records",
     "courtship_clips_path": "../assets/clips/courtship",
     "noise_clips_path": "../assets/clips/noise"

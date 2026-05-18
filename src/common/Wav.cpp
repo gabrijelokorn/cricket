@@ -16,6 +16,10 @@ double complex2magnitude(fftw_complex complex_number)
     return sqrt(complex_number[0] * complex_number[0] + complex_number[1] * complex_number[1]);
 }
 
+double Wav::specTimeFrameToMs(int frame) {
+    return ((double)(frame * gConfig.hopSize) / (double)this->getWavSamplerate()) * 1000.0;
+}
+
 double Wav::getFreqBin(double freq)
 {
     return (freq / (double)this->getWavMaxFreq()) * (double)this->getWavNumFreqBins();

@@ -10,6 +10,7 @@ bool loadConfig(const char* path) {
         gConfig.windowSize = j.at("window_size").get<int>();
         gConfig.overlapSize = j.at("overlap_size").get<int>();
         gConfig.eventSize = j.at("event_size").get<int>();
+        gConfig.eventStep = j.at("event_step").get<int>();
         gConfig.hopSize = gConfig.windowSize - gConfig.overlapSize;
         gConfig.recordsPath = j.at("records_path").get<std::string>();
         gConfig.courtshipClipsPath = j.at("courtship_clips_path").get<std::string>();
