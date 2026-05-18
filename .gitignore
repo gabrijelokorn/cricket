@@ -5,6 +5,7 @@ conan
 # input data
 *.wav
 *.png
+!assets/presentation/courship_sounds_example.png
 
 # vscode
 .vscode
