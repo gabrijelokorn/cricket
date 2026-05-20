@@ -1,9 +1,15 @@
 #include <iostream>
 #include <torch/script.h>
+#include <limits>
 
 #include "Wav.hpp"
 #include "config.hpp"
 #include "gather.hpp"
+struct Courtship {
+    std::vector<TimeInterval> events;
+    double start;
+    double end;
+};
 
 int main()
 {
@@ -29,6 +35,7 @@ int main()
         w.getMSpec().convertTo(spec8u, CV_8U);
         cv::cvtColor(spec8u, display, cv::COLOR_GRAY2BGR);
 
+        std::vector<TimeInterval> detectedEvents;
         for (int i = 0; i < w.getWavNumTimeFrames() - gConfig.eventSize; i += gConfig.eventSize + gConfig.eventStep)
         {
             // Normalize the spectrogram clip to match the values from trained model
@@ -50,13 +57,23 @@ int main()
                 cv::Mat roi = display(cv::Range::all(), cv::Range(i, i + gConfig.eventSize));
                 cv::Mat overlay = roi.clone();
                 cv::rectangle(overlay, cv::Point(0, 0), cv::Point(overlay.cols, overlay.rows),
-                cv::Scalar(0, 255, 0), cv::FILLED);
+                              cv::Scalar(0, 255, 0), cv::FILLED);
                 cv::addWeighted(overlay, 0.2, roi, 0.8, 0, roi); // 20% green, 80% original
 
-                // std::cout << "Detected at: " << w.specTimeFrameToMs(i) << " ms with score: " << score << std::endl;
+                detectedEvents.push_back({w.specTimeFrameToMs(i),
+                                          w.specTimeFrameToMs(i + gConfig.eventSize)});
+
                 i += gConfig.eventSize - gConfig.eventStep;
             }
         }
+
+        // put the detected courtships onto new spectrogram and export the image
+        // std::vector<Courtship> courtships;
+
+        // for (TimeInterval ti : detectedEvents)
+        // {
+
+        // }
 
         // cv::imwrite("../detected_" + w.getRecName() + ".png", display);
     }
