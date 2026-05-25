@@ -17,7 +17,7 @@ int main()
     }
 
     // Load the TorchScript model
-    torch::jit::script::Module model = torch::jit::load("../cricket.pt");
+    torch::jit::script::Module model = torch::jit::load("../assets/models/cricket.pt");
     model.eval();
 
     // Load wav recordings as spectrograms
@@ -56,13 +56,15 @@ int main()
             }
         }
 
+        // Sort detected events by start time
+        std::sort(detectedEvents.begin(), detectedEvents.end(), [](const TimeInterval &a, const TimeInterval &b)
+                  { return a.start < b.start; });
+
         // Put the detected courtships onto new spectrogram and export the image
         std::vector<Courtship> courtships;
-
         Courtship courtship;
         courtship.addEvent(detectedEvents.front());
 
-        Logger::set_priority(DebugPriority);
         for (auto it = detectedEvents.begin() + 1; it != detectedEvents.end(); ++it)
         {
             TimeInterval ti = *it;
@@ -89,6 +91,23 @@ int main()
         // Create spectrogram with detected courtships highlighted and export it
         for (const auto &c : courtships)
         {
+            // Mark individual events in a lighter green
+            for (const auto &ev : c.events)
+            {
+                int evStart = std::max(0, w.timeToFrame(ev.start));
+                int evEnd = std::min(display.cols, w.timeToFrame(ev.end));
+                if (evStart >= evEnd)
+                    continue;
+
+                cv::Mat evRoi = display(cv::Range::all(), cv::Range(evStart, evEnd));
+                cv::Mat evOverlay = evRoi.clone();
+                cv::rectangle(evOverlay, cv::Point(0, 0), cv::Point(evOverlay.cols, evOverlay.rows),
+                              cv::Scalar(0, 0, 200), cv::FILLED);
+                cv::Mat evBlended;
+                cv::addWeighted(evOverlay, 0.2, evRoi, 0.8, 0, evBlended);
+                evBlended.copyTo(evRoi);
+            }
+
             int startFrame = std::max(0, w.timeToFrame(c.events.front().start));
             int endFrame = std::min(display.cols, w.timeToFrame(c.events.back().end));
 
@@ -101,7 +120,7 @@ int main()
             cv::Mat roi = display(cv::Range::all(), cv::Range(startFrame, endFrame));
             cv::Mat overlay = roi.clone();
             cv::rectangle(overlay, cv::Point(0, 0), cv::Point(overlay.cols, overlay.rows),
-                          cv::Scalar(255, 0, 0), cv::FILLED);
+                          cv::Scalar(0, 255, 0), cv::FILLED);
             cv::Mat blended;
             cv::addWeighted(overlay, 0.2, roi, 0.8, 0, blended);
             blended.copyTo(roi);

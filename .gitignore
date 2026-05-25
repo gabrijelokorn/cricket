@@ -15,5 +15,5 @@ CMakeUserPresets.json
 # CMakePresets.json
 
 # AI models
-/**/*.pth
-/**/*.pt
+# /**/*.pth
+# /**/*.pt

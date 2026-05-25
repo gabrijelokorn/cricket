@@ -6,6 +6,7 @@
 #include <fftw3.h>
 #include <opencv2/opencv.hpp>
 #include <cmath>
+#include <algorithm>
 
 #include "json.hpp"
 #include "config.hpp"
