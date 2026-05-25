@@ -9,11 +9,39 @@
 
 #include "json.hpp"
 #include "config.hpp"
+#include "logger.hpp"
 
+class Wav;
+struct TimeInterval;
+struct FrameInterval;
 struct TimeInterval
 {
     double start;
     double end;
+
+    FrameInterval toFrameInterval(const Wav &w) const;
+};
+
+struct FrameInterval
+{
+    int start;
+    int end;
+
+    TimeInterval toTimeInterval(const Wav &w) const;
+};
+
+struct Courtship
+{
+    std::vector<TimeInterval> events;
+    double start;
+    double end;
+
+    void addEvent(const TimeInterval &ti)
+    {
+        events.push_back(ti);
+        start = events.front().start;
+        end = events.back().end;
+    }
 };
 
 class Wav
@@ -36,8 +64,8 @@ private:
     std::vector<double> mSoundData;
     cv::Mat mSpec;
 
-    std::vector<TimeInterval> mCourtship;
-    std::vector<TimeInterval> mNoise;
+    std::vector<TimeInterval> mLabeledCourtship;
+    std::vector<TimeInterval> mLabeledNoise;
 
 public:
     Wav() = default;
@@ -70,19 +98,24 @@ public:
     void setWavDuration(int duration) { mWavDuration = duration; }
     int getWavDuration() const { return mWavDuration; }
 
-    std::vector<TimeInterval> getCourtship() const { return mCourtship; }
-    std::vector<TimeInterval> getNoise() const { return mNoise; }
+    std::vector<TimeInterval> getLabeledCourtship() const { return mLabeledCourtship; }
+    std::vector<TimeInterval> getLabeledNoise() const { return mLabeledNoise; }
 
-    double specTimeFrameToMs(int frame);
-    int getTimeFrame(double ms);
-    TimeInterval reframeTimeInterval(TimeInterval ti);
+    // Conversions
+    double freqToBin(double freq);
+    double frameToTime(int f) const;
+    int timeToFrame(double t) const;
+
+    FrameInterval normalizeFrameInterval(FrameInterval fi);
+    TimeInterval normalizeTimeInterval(TimeInterval ti);
+
+    cv::Mat getClipAtFrame(int start);
+    cv::Mat getClipByFrameInterval(FrameInterval fi);
+    cv::Mat getClipByTimeInterval(TimeInterval ti);
     void exportClip(cv::Mat clip, const std::string rPath);
-    cv::Mat getClipByTime(TimeInterval t);
-    cv::Mat getClipByFrame(int f);
     void clipCourtship();
     void clipNoise();
 
-    double getFreqBin(double freq);
     bool getSpec();
 
     cv::Mat getMSpec() { return this->mSpec; }

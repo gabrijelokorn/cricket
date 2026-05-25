@@ -39,6 +39,7 @@ add_library(common STATIC
     src/common/Wav.cpp
     src/common/config.cpp
     src/common/gather.cpp
+    src/common/logger.hpp
 )
 
 target_include_directories(common PUBLIC

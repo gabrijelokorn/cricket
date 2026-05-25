@@ -5,11 +5,7 @@
 #include "Wav.hpp"
 #include "config.hpp"
 #include "gather.hpp"
-struct Courtship {
-    std::vector<TimeInterval> events;
-    double start;
-    double end;
-};
+#include "logger.hpp"
 
 int main()
 {
@@ -39,7 +35,7 @@ int main()
         for (int i = 0; i < w.getWavNumTimeFrames() - gConfig.eventSize; i += gConfig.eventSize + gConfig.eventStep)
         {
             // Normalize the spectrogram clip to match the values from trained model
-            cv::Mat clip = w.getClipByFrame(i);
+            cv::Mat clip = w.getClipAtFrame(i);
             cv::Mat normalized;
             clip.convertTo(normalized, CV_32F, 1.0 / 255.0);
 
@@ -54,28 +50,64 @@ int main()
 
             if (score > 0.5f)
             {
-                cv::Mat roi = display(cv::Range::all(), cv::Range(i, i + gConfig.eventSize));
-                cv::Mat overlay = roi.clone();
-                cv::rectangle(overlay, cv::Point(0, 0), cv::Point(overlay.cols, overlay.rows),
-                              cv::Scalar(0, 255, 0), cv::FILLED);
-                cv::addWeighted(overlay, 0.2, roi, 0.8, 0, roi); // 20% green, 80% original
-
-                detectedEvents.push_back({w.specTimeFrameToMs(i),
-                                          w.specTimeFrameToMs(i + gConfig.eventSize)});
-
+                detectedEvents.push_back({w.frameToTime(i),
+                                          w.frameToTime(i + gConfig.eventSize)});
                 i += gConfig.eventSize - gConfig.eventStep;
             }
         }
 
-        // put the detected courtships onto new spectrogram and export the image
-        // std::vector<Courtship> courtships;
+        // Put the detected courtships onto new spectrogram and export the image
+        std::vector<Courtship> courtships;
 
-        // for (TimeInterval ti : detectedEvents)
-        // {
+        Courtship courtship;
+        courtship.addEvent(detectedEvents.front());
 
-        // }
+        Logger::set_priority(DebugPriority);
+        for (auto it = detectedEvents.begin() + 1; it != detectedEvents.end(); ++it)
+        {
+            TimeInterval ti = *it;
+            // Add this event to the ongoing courtship
+            if (((ti.start - courtship.events.back().start)) * 1000 <= gConfig.courtshipMaxGap)
+            {
+                courtship.addEvent(ti);
+                // Save if last event
+                if (std::next(it) == detectedEvents.end())
+                    courtships.push_back(courtship);
+            }
+            else
+            {
+                // Save the courtship if enough events occured
+                if (courtship.events.size() >= gConfig.courtshipMinEvents)
+                    courtships.push_back(courtship);
+                // Create new courtship object if the gap is too big
+                courtship = Courtship();
+                courtship.addEvent(ti);
+            }
+        }
+        Logger::Info("Detected %d courtship(s) in recording %s", (int)courtships.size(), w.getRecName().c_str());
 
-        // cv::imwrite("../detected_" + w.getRecName() + ".png", display);
+        // Create spectrogram with detected courtships highlighted and export it
+        for (const auto &c : courtships)
+        {
+            int startFrame = std::max(0, w.timeToFrame(c.events.front().start));
+            int endFrame = std::min(display.cols, w.timeToFrame(c.events.back().end));
+
+            if (startFrame >= endFrame)
+            {
+                Logger::Warn("Skipping — invalid range %d", 1);
+                continue;
+            }
+
+            cv::Mat roi = display(cv::Range::all(), cv::Range(startFrame, endFrame));
+            cv::Mat overlay = roi.clone();
+            cv::rectangle(overlay, cv::Point(0, 0), cv::Point(overlay.cols, overlay.rows),
+                          cv::Scalar(255, 0, 0), cv::FILLED);
+            cv::Mat blended;
+            cv::addWeighted(overlay, 0.2, roi, 0.8, 0, blended);
+            blended.copyTo(roi);
+        }
+
+        cv::imwrite("../detected_" + w.getRecName() + ".png", display);
     }
 
     return 1;

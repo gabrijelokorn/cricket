@@ -12,6 +12,8 @@ struct Config {
     int overlapSize;
     int eventSize;
     int eventStep;
+    int courtshipMinEvents;
+    double courtshipMaxGap;
     std::string recordsPath;
     std::string courtshipClipsPath;
     std::string noiseClipsPath;

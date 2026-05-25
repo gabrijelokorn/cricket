@@ -2,32 +2,55 @@
 
 #include "Wav.hpp"
 
-std::vector<double> hanning_window(int N)
+/**
+ * @brief A function for smoothening STFT.
+ *
+ * @param window_size is number of frames FFT is calculated upon
+ * @return std::vector<double> window of spectrogram values
+ */
+std::vector<double> hanning_window(int window_size)
 {
-    std::vector<double> window(N);
-    for (int n = 0; n < N; ++n)
+    std::vector<double> window(window_size);
+    for (int n = 0; n < window_size; ++n)
     {
-        window[n] = 0.5 * (1 - cos((2 * M_PI * n) / (N - 1)));
+        window[n] = 0.5 * (1 - cos((2 * M_PI * n) / (window_size - 1)));
     }
     return window;
 }
+/**
+ * @brief Convert values from complex to magnitude
+ *
+ * @param complex_number
+ * @return double
+ */
 double complex2magnitude(fftw_complex complex_number)
 {
     return sqrt(complex_number[0] * complex_number[0] + complex_number[1] * complex_number[1]);
 }
 
-double Wav::specTimeFrameToMs(int frame) {
-    return ((double)(frame * gConfig.hopSize) / (double)this->getWavSamplerate()) * 1000.0;
-}
-
-double Wav::getFreqBin(double freq)
+double Wav::freqToBin(double freq)
 {
     return (freq / (double)this->getWavMaxFreq()) * (double)this->getWavNumFreqBins();
 }
 
-int Wav::getTimeFrame(double ms)
+int Wav::timeToFrame(double t) const
 {
-    return ms / (double)this->getWavDuration() * (double)this->mSpec.cols;
+    return t / (double)this->getWavDuration() * (double)this->mSpec.cols;
+}
+
+double Wav::frameToTime(int f) const
+{
+    return ((double)(f * gConfig.hopSize) / (double)this->getWavSamplerate());
+}
+
+FrameInterval TimeInterval::toFrameInterval(const Wav &w) const
+{
+    return FrameInterval{w.timeToFrame(start), w.timeToFrame(end)};
+}
+
+TimeInterval FrameInterval::toTimeInterval(const Wav &w) const
+{
+    return TimeInterval{w.frameToTime(start), w.frameToTime(end)};
 }
 
 void Wav::exportClip(cv::Mat clip, const std::string rPath)
@@ -35,69 +58,94 @@ void Wav::exportClip(cv::Mat clip, const std::string rPath)
     cv::imwrite(rPath, clip);
 }
 
-TimeInterval Wav::reframeTimeInterval(TimeInterval ti)
+FrameInterval Wav::normalizeFrameInterval(FrameInterval fi)
 {
     if (!gConfig.eventSize)
-        return ti;
-        
-    int startFrame = std::floor(getTimeFrame(ti.start));
-    int endFrame = std::ceil(getTimeFrame(ti.end));
-
-    if (endFrame - startFrame <= gConfig.eventSize)
     {
-        int diff = gConfig.eventSize - (endFrame - startFrame);
+        Logger::Warn("Event size: %d", gConfig.eventSize);
+        return fi;
+    }
+
+    if (fi.end - fi.start <= gConfig.eventSize)
+    {
+        int diff = gConfig.eventSize - (fi.end - fi.start);
         int padLeft = diff / 2;
         int padRight = diff - padLeft; // takes the extra 1 if diff is odd
 
-        startFrame -= padLeft;
-        endFrame += padRight;
+        fi.start -= padLeft;
+        fi.end += padRight;
     }
     else
     {
-        int diff = (endFrame - startFrame) - gConfig.eventSize;
+        int diff = (fi.end - fi.start) - gConfig.eventSize;
         int trimLeft = diff / 2;
         int trimRight = diff - trimLeft;
 
-        startFrame += trimLeft;
-        endFrame -= trimRight;
+        fi.start += trimLeft;
+        fi.end -= trimRight;
     }
 
-    startFrame = std::max(0, startFrame);
-    endFrame = std::min(this->mSpec.cols, endFrame);
+    fi.start = std::max(0, fi.start);
+    fi.end = std::min(this->mSpec.cols, fi.end);
 
-    return TimeInterval{(double)startFrame, (double)endFrame};
+    return fi;
 }
 
-cv::Mat Wav::getClipByTime(TimeInterval ti)
+TimeInterval Wav::normalizeTimeInterval(TimeInterval ti)
 {
-    TimeInterval clipTi = this->reframeTimeInterval(ti);
-    cv::Mat clip = this->mSpec.colRange(clipTi.start, clipTi.end);
+    if (!gConfig.eventSize)
+    {
+        Logger::Warn("Event size: %d", gConfig.eventSize);
+        return ti;
+    }
 
-    return clip;
+    // Convert to frames and normalize
+    FrameInterval fi = ti.toFrameInterval(*this);
+    fi = this->normalizeFrameInterval(fi);
+
+    return fi.toTimeInterval(*this);
 }
 
-cv::Mat Wav::getClipByFrame(int f)
+cv::Mat Wav::getClipAtFrame(int start)
 {
-    cv::Mat clip = this->mSpec.colRange(f, f + gConfig.eventSize);
-    return clip;
+    return this->mSpec.colRange(start, start + gConfig.eventSize);
+}
+
+cv::Mat Wav::getClipByFrameInterval(FrameInterval fi)
+{
+    return this->mSpec.colRange(fi.start, fi.end);
+}
+
+cv::Mat Wav::getClipByTimeInterval(TimeInterval ti)
+{
+    FrameInterval fi = ti.toFrameInterval(*this);
+    return this->getClipByFrameInterval(fi);
 }
 
 void Wav::clipCourtship()
 {
-    for (TimeInterval t : this->mCourtship)
+    int count = 0;
+    for (TimeInterval t : this->mLabeledCourtship)
     {
-        cv::Mat clip = getClipByTime(t);
-        this->exportClip(clip, gConfig.courtshipClipsPath + "/" + this->mRecName + "_" + std::to_string(t.start) + "-" + std::to_string(t.end) + ".png");
+        TimeInterval reframed = this->normalizeTimeInterval(t);
+        cv::Mat clip = getClipByTimeInterval(reframed);
+        this->exportClip(clip, gConfig.courtshipClipsPath + "/" + this->mRecName + "_" + std::to_string(reframed.start) + "-" + std::to_string(reframed.end) + ".png");
+        count++;
     }
+    Logger::Info("Exported %d courtship clips from %s", count, this->getRecName().c_str());
 }
 
 void Wav::clipNoise()
 {
-    for (TimeInterval t : this->mNoise)
+    int count = 0;
+    for (TimeInterval t : this->mLabeledNoise)
     {
-        cv::Mat clip = getClipByTime(t);
-        this->exportClip(clip, gConfig.noiseClipsPath + "/" + this->mRecName + "_" + std::to_string(t.start) + "-" + std::to_string(t.end) + ".png");
+        TimeInterval reframed = this->normalizeTimeInterval(t);
+        cv::Mat clip = getClipByTimeInterval(reframed);
+        this->exportClip(clip, gConfig.noiseClipsPath + "/" + this->mRecName + "_" + std::to_string(reframed.start) + "-" + std::to_string(reframed.end) + ".png");
+        count++;
     }
+    Logger::Info("Exported %d noise clips from %s", count, this->getRecName().c_str());
 }
 
 bool Wav::getSpec()
@@ -162,8 +210,8 @@ bool Wav::getSpec()
     }
     cv::flip(this->mSpec, this->mSpec, 0);
 
-    int startRow = std::max(0, (int)std::floor(this->getFreqBin(gConfig.specMinFreq)));
-    int endRow = std::min(this->getWavNumFreqBins(), (int)std::ceil(this->getFreqBin(gConfig.specMaxFreq)));
+    int startRow = std::max(0, (int)std::floor(this->freqToBin(gConfig.specMinFreq)));
+    int endRow = std::min(this->getWavNumFreqBins(), (int)std::ceil(this->freqToBin(gConfig.specMaxFreq)));
     this->mSpec(cv::Range(this->getWavNumFreqBins() - endRow, this->getWavNumFreqBins() - startRow), cv::Range::all()).copyTo(this->mSpec);
 
     return true;
@@ -180,11 +228,11 @@ Wav::Wav(const std::string &rPath)
 
         if (wav_json.contains("courtship"))
             for (auto &entry : wav_json["courtship"])
-                mCourtship.push_back({entry["start_time"], entry["end_time"]});
+                this->mLabeledCourtship.push_back({entry["start_time"], entry["end_time"]});
 
         if (wav_json.contains("noise"))
             for (auto &entry : wav_json["noise"])
-                mNoise.push_back({entry["start_time"], entry["end_time"]});
+                this->mLabeledNoise.push_back({entry["start_time"], entry["end_time"]});
     }
 
     catch (const std::exception &e)
