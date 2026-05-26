@@ -18,6 +18,7 @@ int main()
     {
         w.clipCourtship();
         w.clipNoise();
+        w.exportSpectrogram();
     }
 
     return 1;

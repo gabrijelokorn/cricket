@@ -5,8 +5,8 @@
 #include "json.hpp"
 
 struct Config {
-    int specMinFreq;
-    int specMaxFreq;
+    int clipMinFreq;
+    int clipMaxFreq;
     int windowSize;
     int hopSize;
     int overlapSize;

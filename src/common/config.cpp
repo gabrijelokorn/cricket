@@ -5,8 +5,8 @@ Config gConfig = {};
 bool loadConfig(const char* path) {
     try {
         auto j = readJson(path);
-        gConfig.specMinFreq = j.at("spec_min_freq").get<int>();
-        gConfig.specMaxFreq = j.at("spec_max_freq").get<int>();
+        gConfig.clipMinFreq = j.at("clip_min_freq").get<int>();
+        gConfig.clipMaxFreq = j.at("clip_max_freq").get<int>();
         gConfig.windowSize = j.at("window_size").get<int>();
         gConfig.overlapSize = j.at("overlap_size").get<int>();
         gConfig.eventSize = j.at("event_size").get<int>();

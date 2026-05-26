@@ -107,13 +107,15 @@ public:
     double frameToTime(int f) const;
     int timeToFrame(double t) const;
 
-    FrameInterval normalizeFrameInterval(FrameInterval fi);
-    TimeInterval normalizeTimeInterval(TimeInterval ti);
+    cv::Mat trimFrequencyRange(cv::Mat spec);
+    FrameInterval trimFrameInterval(FrameInterval fi);
+    TimeInterval trimTimeInterval(TimeInterval ti);
 
     cv::Mat getClipAtFrame(int start);
     cv::Mat getClipByFrameInterval(FrameInterval fi);
     cv::Mat getClipByTimeInterval(TimeInterval ti);
     void exportClip(cv::Mat clip, const std::string rPath);
+    void exportSpectrogram();
     void clipCourtship();
     void clipNoise();
 

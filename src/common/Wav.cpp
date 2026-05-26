@@ -58,7 +58,13 @@ void Wav::exportClip(cv::Mat clip, const std::string rPath)
     cv::imwrite(rPath, clip);
 }
 
-FrameInterval Wav::normalizeFrameInterval(FrameInterval fi)
+void Wav::exportSpectrogram()
+{
+    std::string rPath = gConfig.recordsPath + "/" + this->getRecName() + "_spectrogram.png";
+    cv::imwrite(rPath, this->mSpec);
+}
+
+FrameInterval Wav::trimFrameInterval(FrameInterval fi)
 {
     if (!gConfig.eventSize)
     {
@@ -91,7 +97,7 @@ FrameInterval Wav::normalizeFrameInterval(FrameInterval fi)
     return fi;
 }
 
-TimeInterval Wav::normalizeTimeInterval(TimeInterval ti)
+TimeInterval Wav::trimTimeInterval(TimeInterval ti)
 {
     if (!gConfig.eventSize)
     {
@@ -101,9 +107,18 @@ TimeInterval Wav::normalizeTimeInterval(TimeInterval ti)
 
     // Convert to frames and normalize
     FrameInterval fi = ti.toFrameInterval(*this);
-    fi = this->normalizeFrameInterval(fi);
+    fi = this->trimFrameInterval(fi);
 
     return fi.toTimeInterval(*this);
+}
+
+cv::Mat Wav::trimFrequencyRange(cv::Mat spec)
+{
+    int startRow = std::max(0, (int)std::floor(this->freqToBin(gConfig.clipMinFreq)));
+    int endRow = std::min(this->getWavNumFreqBins(), (int)std::ceil(this->freqToBin(gConfig.clipMaxFreq)));
+    spec(cv::Range(this->getWavNumFreqBins() - endRow, this->getWavNumFreqBins() - startRow), cv::Range::all()).copyTo(spec);
+
+    return spec;
 }
 
 cv::Mat Wav::getClipAtFrame(int start)
@@ -127,8 +142,9 @@ void Wav::clipCourtship()
     int count = 0;
     for (TimeInterval t : this->mLabeledCourtship)
     {
-        TimeInterval reframed = this->normalizeTimeInterval(t);
+        TimeInterval reframed = this->trimTimeInterval(t);
         cv::Mat clip = getClipByTimeInterval(reframed);
+        clip = this->trimFrequencyRange(clip);
         this->exportClip(clip, gConfig.courtshipClipsPath + "/" + this->mRecName + "_" + std::to_string(reframed.start) + "-" + std::to_string(reframed.end) + ".png");
         count++;
     }
@@ -140,8 +156,9 @@ void Wav::clipNoise()
     int count = 0;
     for (TimeInterval t : this->mLabeledNoise)
     {
-        TimeInterval reframed = this->normalizeTimeInterval(t);
+        TimeInterval reframed = this->trimTimeInterval(t);
         cv::Mat clip = getClipByTimeInterval(reframed);
+        clip = this->trimFrequencyRange(clip);
         this->exportClip(clip, gConfig.noiseClipsPath + "/" + this->mRecName + "_" + std::to_string(reframed.start) + "-" + std::to_string(reframed.end) + ".png");
         count++;
     }
@@ -209,10 +226,6 @@ bool Wav::getSpec()
         }
     }
     cv::flip(this->mSpec, this->mSpec, 0);
-
-    int startRow = std::max(0, (int)std::floor(this->freqToBin(gConfig.specMinFreq)));
-    int endRow = std::min(this->getWavNumFreqBins(), (int)std::ceil(this->freqToBin(gConfig.specMaxFreq)));
-    this->mSpec(cv::Range(this->getWavNumFreqBins() - endRow, this->getWavNumFreqBins() - startRow), cv::Range::all()).copyTo(this->mSpec);
 
     return true;
 }
