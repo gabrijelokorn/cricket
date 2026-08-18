@@ -17,7 +17,6 @@ struct Config {
     int courtshipMinEvents;
     double courtshipMaxGap;
     std::string recordsPath;
-    std::string clipsBasePath;
     std::string courtshipClipsPath;
     std::string noiseClipsPath;
     ClipFormat clipFormat;
