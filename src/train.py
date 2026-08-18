@@ -1,5 +1,6 @@
 import os
 import random
+from collections import Counter
 import numpy as np
 import torch
 import torch.nn as nn
@@ -17,13 +18,25 @@ def parse_rec_name(filename):
 
 
 def load_samples(root="assets/clips"):
-    samples = []  # (path, label, rec_name)
+    raw = []  # (path, label, rec_name, shape)
     for label, folder in enumerate(["noise", "courtship"]):
         folder_path = os.path.join(root, folder)
         for filename in os.listdir(folder_path):
             if filename.lower().endswith(".npy"):
                 path = os.path.join(folder_path, filename)
-                samples.append((path, label, parse_rec_name(filename)))
+                shape = np.load(path, mmap_mode="r").shape
+                raw.append((path, label, parse_rec_name(filename), shape))
+
+    # A few clips near a recording's start/end can come out narrower than the
+    # rest (padding to event_size ran off the edge of the file) — drop them
+    # rather than let a mismatched shape crash batching later.
+    expected_shape = Counter(shape for *_, shape in raw).most_common(1)[0][0]
+    samples = [(p, l, rec) for p, l, rec, shape in raw if shape == expected_shape]
+
+    skipped = len(raw) - len(samples)
+    if skipped:
+        print(f"Skipped {skipped} clip(s) with shape != {expected_shape} "
+              f"(likely truncated near a recording boundary)")
     return samples
 
 
@@ -107,7 +120,7 @@ class CricketCNN(nn.Module):
 
 def train():
     # Load data and split by recording (not by clip — see split_by_recording)
-    samples = load_samples("assets/clips")
+    samples = load_samples("../assets/clips")
     print(f"Total clips: {len(samples)}")
 
     train_samples, val_samples = split_by_recording(samples)
@@ -161,18 +174,18 @@ def train():
         # Save the best model seen so far
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), "assets/models/cricket.pth")
+            torch.save(model.state_dict(), "../assets/models/cricket.pth")
             print(f"           ✓ new best saved ({val_acc:.1%})")
 
     print(f"\nDone. Best validation accuracy: {best_val_acc:.1%}")
     print("Model saved to assets/models/cricket.pth")
 
     # ── Export for C++ ────────────────────────────────────────────────
-    model.load_state_dict(torch.load("assets/models/cricket.pth"))  # load best weights
+    model.load_state_dict(torch.load("../assets/models/cricket.pth"))  # load best weights
     model.eval()
     dummy = torch.randn(1, 1, 300, 16)
     scripted = torch.jit.trace(model, dummy)
-    scripted.save("assets/models/cricket.pt")
+    scripted.save("../assets/models/cricket.pt")
     print("Exported to assets/models/cricket.pt")
 
 if __name__ == "__main__":

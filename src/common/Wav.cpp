@@ -143,6 +143,13 @@ void Wav::exportLabeledClips(const std::vector<TimeInterval> &labeled, const std
         cv::Mat clip = this->getClipByTimeInterval(reframed);
         clip = this->trimFrequencyRange(clip);
 
+        if (clip.cols != gConfig.eventSize)
+        {
+            Logger::Warn("Skipping clip with %d frames (expected %d) — likely near a recording boundary: %s [%f, %f]",
+                         clip.cols, gConfig.eventSize, this->mRecName.c_str(), reframed.start, reframed.end);
+            continue;
+        }
+
         std::string ext = (gConfig.clipFormat == ClipFormat::PNG) ? "png" : "npy";
         std::string rPath = outDir + "/" + this->mRecName
             + "_" + std::to_string(reframed.start)
