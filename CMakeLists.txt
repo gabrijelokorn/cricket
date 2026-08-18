@@ -72,6 +72,12 @@ target_link_libraries(${CLIPGEN}  PRIVATE
     common
 )
     
-target_link_libraries(${CLIPCLASS} PRIVATE 
+target_link_libraries(${CLIPCLASS} PRIVATE
     common
+)
+
+# Remove generated clips (keeps .gitkeep so the folder structure stays tracked)
+add_custom_target(clean-clips
+    COMMAND find ${CMAKE_SOURCE_DIR}/assets/clips -type f ! -name ".gitkeep" -delete
+    COMMENT "Removing generated clip files from assets/clips"
 )

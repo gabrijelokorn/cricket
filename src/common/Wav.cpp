@@ -218,15 +218,22 @@ bool Wav::getSpec()
     fftw_free(in);
     fftw_free(out);
 
-    double minVal = std::numeric_limits<double>::infinity();
-    double maxVal = -std::numeric_limits<double>::infinity();
+    // Per-bin baseline: median of each frequency bin across this file, so a loud event in one bin can't skew the normalization of every other bin.
+    std::vector<double> binBaseline(this->getWavNumFreqBins());
+    std::vector<double> column(this->getWavNumTimeFrames());
 
-    for (const auto &frame : data_spec)
-        for (double v : frame)
-        {
-            minVal = std::min(minVal, v);
-            maxVal = std::max(maxVal, v);
-        }
+    for (int j = 0; j < this->getWavNumFreqBins(); j++)
+    {
+        for (int i = 0; i < this->getWavNumTimeFrames(); i++)
+            column[i] = data_spec[i][j];
+
+        std::nth_element(column.begin(), column.begin() + column.size() / 2, column.end());
+        binBaseline[j] = column[column.size() / 2];
+    }
+
+    // Fixed range, same for every file, so the same physical event maps to the same output value regardless of what else happened in that recording.
+    const double RANGE_LOW = 0.0;
+    const double RANGE_HIGH = 3.0;
 
     this->mSpec.create(std::vector<int>{this->getWavNumFreqBins(), this->getWavNumTimeFrames()}, CV_32F);
 
@@ -234,7 +241,8 @@ bool Wav::getSpec()
     {
         for (int j = 0; j < this->getWavNumFreqBins(); j++)
         {
-            double norm = (data_spec[i][j] - minVal) / (maxVal - minVal);
+            double rel = data_spec[i][j] - binBaseline[j];
+            double norm = std::clamp((rel - RANGE_LOW) / (RANGE_HIGH - RANGE_LOW), 0.0, 1.0);
             this->mSpec.at<float>(j, i) = (float)(norm * 255);
         }
     }
