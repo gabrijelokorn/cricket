@@ -114,14 +114,16 @@ public:
     cv::Mat getClipAtFrame(int start);
     cv::Mat getClipByFrameInterval(FrameInterval fi);
     cv::Mat getClipByTimeInterval(TimeInterval ti);
-    void exportClip(cv::Mat clip, const std::string rPath);
     void exportSpectrogram();
-    void clipCourtship();
-    void clipNoise();
+    void exportLabeledCourtship();
+    void exportLabeledNoise();
 
     bool getSpec();
 
     cv::Mat getMSpec() { return this->mSpec; }
+
+private:
+    void exportLabeledClips(const std::vector<TimeInterval> &labeled, const std::string &outDir);
 };
 
 #endif // WAV_HPP

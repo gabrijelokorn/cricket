@@ -29,6 +29,7 @@ find_package(SndFile CONFIG REQUIRED)
 find_package(FFTW3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Torch REQUIRED)
+find_package(cnpy REQUIRED)
 
 # Target names
 set(CLIPGEN  clipgen)
@@ -64,6 +65,7 @@ target_link_libraries(common PUBLIC
     ${OpenCV_LIBS}
     nfd::nfd
     ${TORCH_LIBRARIES}
+    cnpy::cnpy
 )
 
 target_link_libraries(${CLIPGEN}  PRIVATE 

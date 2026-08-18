@@ -4,6 +4,8 @@
 
 #include "json.hpp"
 
+enum class ClipFormat { PNG, NPY };
+
 struct Config {
     int clipMinFreq;
     int clipMaxFreq;
@@ -15,8 +17,10 @@ struct Config {
     int courtshipMinEvents;
     double courtshipMaxGap;
     std::string recordsPath;
+    std::string clipsBasePath;
     std::string courtshipClipsPath;
     std::string noiseClipsPath;
+    ClipFormat clipFormat;
 };
 
 // Declare — exists somewhere, usable everywhere

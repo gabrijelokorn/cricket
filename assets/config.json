@@ -8,6 +8,5 @@
     "courtship_min_events": 3,
     "courtship_max_gap": 3000,
     "records_path": "../assets/records",
-    "courtship_clips_path": "../assets/clips/courtship",
-    "noise_clips_path": "../assets/clips/noise"
+    "clips_base_path": "../assets/clips"
 }

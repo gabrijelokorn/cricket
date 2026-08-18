@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "cnpy.h"
 #include "Wav.hpp"
 
 /**
@@ -51,11 +52,6 @@ FrameInterval TimeInterval::toFrameInterval(const Wav &w) const
 TimeInterval FrameInterval::toTimeInterval(const Wav &w) const
 {
     return TimeInterval{w.frameToTime(start), w.frameToTime(end)};
-}
-
-void Wav::exportClip(cv::Mat clip, const std::string rPath)
-{
-    cv::imwrite(rPath, clip);
 }
 
 void Wav::exportSpectrogram()
@@ -137,32 +133,49 @@ cv::Mat Wav::getClipByTimeInterval(TimeInterval ti)
     return this->getClipByFrameInterval(fi);
 }
 
-void Wav::clipCourtship()
+void Wav::exportLabeledClips(const std::vector<TimeInterval> &labeled, const std::string &outDir)
 {
     int count = 0;
-    for (TimeInterval t : this->mLabeledCourtship)
+
+    for (const TimeInterval &t : labeled)
     {
         TimeInterval reframed = this->trimTimeInterval(t);
-        cv::Mat clip = getClipByTimeInterval(reframed);
+        cv::Mat clip = this->getClipByTimeInterval(reframed);
         clip = this->trimFrequencyRange(clip);
-        this->exportClip(clip, gConfig.courtshipClipsPath + "/" + this->mRecName + "_" + std::to_string(reframed.start) + "-" + std::to_string(reframed.end) + ".png");
+
+        std::string ext = (gConfig.clipFormat == ClipFormat::PNG) ? "png" : "npy";
+        std::string rPath = outDir + "/" + this->mRecName
+            + "_" + std::to_string(reframed.start)
+            + "_" + std::to_string(reframed.end)
+            + "_" + std::to_string(gConfig.clipMinFreq)
+            + "_" + std::to_string(gConfig.clipMaxFreq)
+            + "." + ext;
+
+        if (gConfig.clipFormat == ClipFormat::PNG)
+        {
+            cv::imwrite(rPath, clip);
+        }
+        else
+        {
+            if (!clip.isContinuous())
+                clip = clip.clone();
+            cnpy::npy_save(rPath, clip.ptr<float>(0), {(size_t)clip.rows, (size_t)clip.cols}, "w");
+        }
+
         count++;
     }
-    Logger::Info("Exported %d courtship clips from %s", count, this->getRecName().c_str());
+
+    Logger::Info("Exported %d clips from %s to %s", count, this->getRecPath().c_str(), outDir.c_str());
 }
 
-void Wav::clipNoise()
+void Wav::exportLabeledCourtship()
 {
-    int count = 0;
-    for (TimeInterval t : this->mLabeledNoise)
-    {
-        TimeInterval reframed = this->trimTimeInterval(t);
-        cv::Mat clip = getClipByTimeInterval(reframed);
-        clip = this->trimFrequencyRange(clip);
-        this->exportClip(clip, gConfig.noiseClipsPath + "/" + this->mRecName + "_" + std::to_string(reframed.start) + "-" + std::to_string(reframed.end) + ".png");
-        count++;
-    }
-    Logger::Info("Exported %d noise clips from %s", count, this->getRecName().c_str());
+    this->exportLabeledClips(this->mLabeledCourtship, gConfig.courtshipClipsPath);
+}
+
+void Wav::exportLabeledNoise()
+{
+    this->exportLabeledClips(this->mLabeledNoise, gConfig.noiseClipsPath);
 }
 
 bool Wav::getSpec()
