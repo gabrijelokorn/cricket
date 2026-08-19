@@ -6,6 +6,8 @@ conan
 *.wav
 *.png
 *.npy
+assets/records/*.json
+assets/records/**/*.txt
 !assets/presentation/courship_sounds_example.png
 
 # vscode
