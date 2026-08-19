@@ -41,17 +41,3 @@ std::vector<std::string> openFileDialog()
 
     return files;
 }
-
-std::vector<Wav> getSpectrograms()
-{
-    auto files = openFileDialog();
-    std::vector<Wav> wavs;
-
-    for (const auto &f : files)
-    {
-        Wav wav = Wav(f);
-        wav.getSpec();
-        wavs.emplace_back(wav);
-    }
-    return wavs;
-}

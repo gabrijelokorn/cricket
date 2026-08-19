@@ -5,6 +5,5 @@
 #include <vector>
 
 std::vector<std::string> openFileDialog();
-std::vector<Wav> getSpectrograms();
 
 #endif // GATHER_HPP    

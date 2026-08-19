@@ -37,11 +37,18 @@ int main(int argc, char **argv)
     std::filesystem::create_directories(gConfig.courtshipClipsPath);
     std::filesystem::create_directories(gConfig.noiseClipsPath);
 
-    std::vector<Wav> spectrograms = getSpectrograms();
-    for (Wav w : spectrograms)
+    for (const std::string &f : openFileDialog())
     {
-        w.exportLabeledCourtship();
-        w.exportLabeledNoise();
+        Wav w(f);
+        if (!w.getSpec())
+        {
+            Logger::Warn("Failed to convert %s to spectrogram — skipping", w.getRecName().c_str());
+            continue;
+        }
+        Logger::Info("Successfully converted %s to spectrogram", w.getRecName().c_str());
+
+        // w.exportLabeledCourtship();
+        // w.exportLabeledNoise();
         w.exportSpectrogram();
     }
 
