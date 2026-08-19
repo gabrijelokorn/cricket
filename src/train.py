@@ -1,5 +1,4 @@
 import os
-import random
 from collections import Counter
 import numpy as np
 import torch
@@ -8,8 +7,19 @@ from torch.utils.data import Dataset, DataLoader
 
 # ─── 1. DATASET ───────────────────────────────────────────────────────────────
 # Reads .npy clips from assets/clips/noise/ (label=0) and assets/clips/courtship/ (label=1).
-# Filenames look like <recName>_<start>_<end>_<clipMinFreq>_<clipMaxFreq>.npy — the train/valid
-# split groups by recName so clips from the same recording never end up on both sides.
+# Filenames look like <recName>_<start>_<end>_<clipMinFreq>_<clipMaxFreq>.npy.
+
+# Recordings held out for validation — everything else goes to training.
+# Pick recordings from a different night/session than anything else you're
+# training on, not just a different file (adjacent-session recordings share
+# background noise/weather and won't actually test generalization).
+VAL_RECORDINGS = {
+    "251204002733",
+    "251204043041",
+    "251204132716",
+    "251204133853",
+    "251204135029",
+}
 
 def parse_rec_name(filename):
     stem = os.path.splitext(filename)[0]
@@ -40,28 +50,52 @@ def load_samples(root="assets/clips"):
     return samples
 
 
-def split_by_recording(samples, val_fraction=0.2, seed=42):
-    recordings = sorted(set(rec for _, _, rec in samples))
-    rng = random.Random(seed)
-    rng.shuffle(recordings)
+def print_stats(samples):
+    # label 1 = positive (courtship), label 0 = negative (noise)
+    per_rec = {}
+    for _, label, rec in samples:
+        counts = per_rec.setdefault(rec, {0: 0, 1: 0})
+        counts[label] += 1
 
-    if len(recordings) < 2:
-        print(f"WARNING: only {len(recordings)} recording(s) found, can't do a recording-level "
-              f"split — falling back to a random per-clip split (train/valid may leak).")
-        items = list(samples)
-        rng.shuffle(items)
-        n_val = max(1, int(len(items) * val_fraction))
-        val_samples   = [(p, l) for p, l, _ in items[:n_val]]
-        train_samples = [(p, l) for p, l, _ in items[n_val:]]
-        return train_samples, val_samples
+    total = {0: 0, 1: 0}
+    for rec in sorted(per_rec):
+        pos, neg = per_rec[rec][1], per_rec[rec][0]
+        total[1] += pos
+        total[0] += neg
+        print(f"{rec}: positive: {pos}, negative: {neg}")
 
-    n_val = max(1, int(len(recordings) * val_fraction))
-    val_recs = set(recordings[:n_val])
+    print(f"TOTAL: positive: {total[1]}, negative: {total[0]}")
 
-    train_samples = [(p, l) for p, l, rec in samples if rec not in val_recs]
-    val_samples   = [(p, l) for p, l, rec in samples if rec in val_recs]
-    print(f"Split {len(recordings)} recording(s): "
-          f"{len(recordings) - len(val_recs)} train, {len(val_recs)} valid")
+
+def split_by_recording(samples, val_recordings):
+    val_recordings = set(val_recordings)
+    all_recordings = set(rec for _, _, rec in samples)
+
+    unknown = val_recordings - all_recordings
+    if unknown:
+        raise ValueError(f"VAL_RECORDINGS contains name(s) not found in the data: {sorted(unknown)}")
+
+    train_samples = [(p, l) for p, l, rec in samples if rec not in val_recordings]
+    val_samples   = [(p, l) for p, l, rec in samples if rec in val_recordings]
+
+    if not val_samples:
+        raise ValueError("VAL_RECORDINGS is empty — nothing to validate against.")
+    if not train_samples:
+        raise ValueError("VAL_RECORDINGS covers every recording — nothing left to train on.")
+
+    def counts(subset):
+        pos = sum(1 for _, l in subset if l == 1)
+        neg = sum(1 for _, l in subset if l == 0)
+        return pos, neg
+
+    train_pos, train_neg = counts(train_samples)
+    val_pos, val_neg = counts(val_samples)
+
+    print(f"Split {len(all_recordings)} recording(s): "
+          f"{len(all_recordings) - len(val_recordings)} train, {len(val_recordings)} valid")
+    print(f"Validation recording(s): {', '.join(sorted(val_recordings))}")
+    print(f"Train clips: {len(train_samples)} (positive: {train_pos}, negative: {train_neg})")
+    print(f"Valid clips: {len(val_samples)} (positive: {val_pos}, negative: {val_neg})")
     return train_samples, val_samples
 
 
@@ -80,7 +114,7 @@ class SpectrogramDataset(Dataset):
 
 
 # ─── 2. MODEL ─────────────────────────────────────────────────────────────────
-# Small CNN designed for your 16×300 images
+# Small CNN designed for your 300×24 (freq_bins × event_size) clips
 
 class CricketCNN(nn.Module):
     def __init__(self):
@@ -122,8 +156,9 @@ def train():
     # Load data and split by recording (not by clip — see split_by_recording)
     samples = load_samples("../assets/clips")
     print(f"Total clips: {len(samples)}")
+    print_stats(samples)
 
-    train_samples, val_samples = split_by_recording(samples)
+    train_samples, val_samples = split_by_recording(samples, VAL_RECORDINGS)
     train_ds = SpectrogramDataset(train_samples)
     val_ds   = SpectrogramDataset(val_samples)
     val_size = len(val_ds)
@@ -147,7 +182,7 @@ def train():
         model.train()
         total_loss = 0.0
         for images, labels in train_loader:
-            predictions = model(images).squeeze()
+            predictions = model(images).squeeze(1)
             loss        = loss_fn(predictions, labels)
 
             optimizer.zero_grad()
@@ -163,7 +198,7 @@ def train():
         correct = 0
         with torch.no_grad():
             for images, labels in val_loader:
-                scores = model(images).squeeze()
+                scores = model(images).squeeze(1)
                 preds  = (torch.sigmoid(scores) > 0.5).float()
                 correct += (preds == labels).sum().item()
 
@@ -183,7 +218,8 @@ def train():
     # ── Export for C++ ────────────────────────────────────────────────
     model.load_state_dict(torch.load("../assets/models/cricket.pth"))  # load best weights
     model.eval()
-    dummy = torch.randn(1, 1, 300, 16)
+    clip_shape = np.load(samples[0][0]).shape  # read real shape instead of hardcoding it
+    dummy = torch.randn(1, 1, *clip_shape)
     scripted = torch.jit.trace(model, dummy)
     scripted.save("../assets/models/cricket.pt")
     print("Exported to assets/models/cricket.pt")

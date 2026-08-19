@@ -47,9 +47,9 @@ int main(int argc, char **argv)
         }
         Logger::Info("Successfully converted %s to spectrogram", w.getRecName().c_str());
 
-        // w.exportLabeledCourtship();
-        // w.exportLabeledNoise();
-        w.exportSpectrogram();
+        w.exportLabeledCourtship();
+        w.exportLabeledNoise();
+        // w.exportSpectrogram();
     }
 
     return 1;

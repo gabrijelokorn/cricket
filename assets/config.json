@@ -3,7 +3,7 @@
     "clip_max_freq": 24000,
     "window_size": 1024,
     "overlap_size": 768,
-    "event_size": 16,
+    "event_size": 24,
     "event_step": 4,
     "courtship_min_events": 3,
     "courtship_max_gap": 3000,
