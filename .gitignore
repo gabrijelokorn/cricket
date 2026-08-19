@@ -10,6 +10,9 @@ assets/records/*.json
 assets/records/**/*.txt
 !assets/presentation/courship_sounds_example.png
 
+# models
+assets/models
+
 # vscode
 .vscode
 
