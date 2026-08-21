@@ -49,7 +49,6 @@ class Wav
 {
 private:
     std::string mRecPath;
-    std::string mRecName;
 
     int mWavSampleRate;
     int mWavFreqRes;
@@ -76,8 +75,8 @@ public:
 
     void setRecPath(const std::string &recPath) { mRecPath = recPath; }
     std::string getRecPath() const { return mRecPath; }
-    void setRecName(const std::string &recName) { mRecName = recName; }
-    std::string getRecName() const { return mRecName; }
+    // Derived from the wav filename itself — e.g. "raven.251208.052755.wav" -> "raven.251208_052755"
+    std::string getRecName() const;
 
     void setWavSamplerate(int sampleRate) { mWavSampleRate = sampleRate; }
     int getWavSamplerate() const { return mWavSampleRate; }

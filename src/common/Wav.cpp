@@ -1,4 +1,5 @@
 #include <iostream>
+#include <filesystem>
 
 #include "cnpy.h"
 #include "Wav.hpp"
@@ -32,6 +33,19 @@ double complex2magnitude(fftw_complex complex_number)
 double Wav::freqToBin(double freq)
 {
     return (freq / (double)this->getWavMaxFreq()) * (double)this->getWavNumFreqBins();
+}
+
+std::string Wav::getRecName() const
+{
+    // e.g. "raven.251208.052755.wav" -> stem "raven.251208.052755" -> "raven.251208_052755"
+    std::string stem = std::filesystem::path(this->mRecPath).stem().string();
+    size_t firstDot = stem.find('.');
+    if (firstDot == std::string::npos)
+        return stem;
+
+    std::string rest = stem.substr(firstDot + 1);
+    std::replace(rest.begin(), rest.end(), '.', '_');
+    return stem.substr(0, firstDot) + "." + rest;
 }
 
 int Wav::timeToFrame(double t) const
@@ -146,16 +160,16 @@ void Wav::exportLabeledClips(const std::vector<TimeInterval> &labeled, const std
         if (clip.cols != gConfig.eventSize)
         {
             Logger::Warn("Skipping clip with %d frames (expected %d) — likely near a recording boundary: %s [%f, %f]",
-                         clip.cols, gConfig.eventSize, this->mRecName.c_str(), reframed.start, reframed.end);
+                         clip.cols, gConfig.eventSize, this->getRecName().c_str(), reframed.start, reframed.end);
             continue;
         }
 
         std::string ext = (gConfig.clipFormat == ClipFormat::PNG) ? "png" : "npy";
-        std::string rPath = outDir + "/" + this->mRecName
-            + "_" + std::to_string(reframed.start)
-            + "_" + std::to_string(reframed.end)
-            + "_" + std::to_string(gConfig.clipMinFreq)
-            + "_" + std::to_string(gConfig.clipMaxFreq)
+        long startMs = std::lround(reframed.start * 1000.0);
+        long endMs = std::lround(reframed.end * 1000.0);
+        std::string rPath = outDir + "/" + this->getRecName()
+            + "." + std::to_string(startMs) + "_" + std::to_string(endMs)
+            + "." + std::to_string(gConfig.clipMinFreq) + "_" + std::to_string(gConfig.clipMaxFreq)
             + "." + ext;
 
         if (gConfig.clipFormat == ClipFormat::PNG)
@@ -265,7 +279,6 @@ Wav::Wav(const std::string &rPath)
         json wav_json = readJson(rPath);
 
         this->setRecPath(wav_json.at("rec_path").get<std::string>());
-        this->setRecName(wav_json.at("rec_name").get<std::string>());
 
         if (wav_json.contains("courtship"))
             for (auto &entry : wav_json["courtship"])
