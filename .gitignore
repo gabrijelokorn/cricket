@@ -11,6 +11,9 @@ assets/records/*.json
 assets/records/**/*.txt
 !assets/presentation/courship_sounds_example.png
 
+# cache
+src/train/__pycache__
+
 # output files
 output
 
