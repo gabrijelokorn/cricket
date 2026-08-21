@@ -31,6 +31,11 @@ struct FrameInterval
     TimeInterval toTimeInterval(const Wav &w) const;
 };
 
+// Tag to select the raw-.wav-file constructor over the JSON-label one — both
+// take a single string, so the compiler needs a second argument to tell them apart.
+struct RawWavTag {};
+inline constexpr RawWavTag rawWav{};
+
 struct Courtship
 {
     std::vector<TimeInterval> events;
@@ -72,6 +77,8 @@ public:
     ~Wav() = default;
 
     Wav(const std::string &rPath);
+    // Construct directly from a .wav file, with no JSON label file — for scanning unlabeled recordings.
+    Wav(const std::string &wavPath, RawWavTag);
 
     void setRecPath(const std::string &recPath) { mRecPath = recPath; }
     std::string getRecPath() const { return mRecPath; }
@@ -123,6 +130,7 @@ public:
 
 private:
     void exportLabeledClips(const std::vector<TimeInterval> &labeled, const std::string &outDir);
+    void loadAudio();
 };
 
 #endif // WAV_HPP

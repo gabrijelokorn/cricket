@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     std::filesystem::create_directories(gConfig.courtshipClipsPath);
     std::filesystem::create_directories(gConfig.noiseClipsPath);
 
-    for (const std::string &f : openFileDialog())
+    for (const std::string &f : openFileDialog(gConfig.recordsPath))
     {
         Wav w(f);
         if (!w.getSpec())

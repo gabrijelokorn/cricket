@@ -55,6 +55,8 @@ add_executable(${CLIPGEN}
     
 add_executable(${CLIPCLASS}
     src/clipclass/main.cpp
+    src/clipclass/pipeline.cpp
+    src/clipclass/pipeline.hpp
     src/common/json.hpp
 )
 

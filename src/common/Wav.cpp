@@ -294,6 +294,17 @@ Wav::Wav(const std::string &rPath)
         std::cerr << "Error loading Wav file: " << e.what() << std::endl;
     }
 
+    this->loadAudio();
+}
+
+Wav::Wav(const std::string &wavPath, RawWavTag)
+{
+    this->setRecPath(wavPath);
+    this->loadAudio();
+}
+
+void Wav::loadAudio()
+{
     SF_INFO wav_info{};
     SNDFILE *wav_file = sf_open(this->getRecPath().c_str(), SFM_READ, &wav_info);
     if (!wav_file)

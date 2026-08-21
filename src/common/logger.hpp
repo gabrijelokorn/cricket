@@ -32,7 +32,10 @@ public:
         {
             std::scoped_lock(log_mutex);
             printf("[Trace]\t");
-            printf(message, args...);
+            if constexpr (sizeof...(Args) == 0)
+                printf("%s", message);
+            else
+                printf(message, args...);
             printf("\n");
         }
     }
@@ -44,7 +47,10 @@ public:
         {
             std::scoped_lock(log_mutex);
             printf("[Debug]\t");
-            printf(message, args...);
+            if constexpr (sizeof...(Args) == 0)
+                printf("%s", message);
+            else
+                printf(message, args...);
             printf("\n");
         }
     }
@@ -56,7 +62,10 @@ public:
         {
             std::scoped_lock(log_mutex);
             printf("[Info]\t");
-            printf(message, args...);
+            if constexpr (sizeof...(Args) == 0)
+                printf("%s", message);
+            else
+                printf(message, args...);
             printf("\n");
         }
     }
@@ -68,7 +77,10 @@ public:
         {
             std::scoped_lock(log_mutex);
             printf("[Warn]\t");
-            printf(message, args...);
+            if constexpr (sizeof...(Args) == 0)
+                printf("%s", message);
+            else
+                printf(message, args...);
             printf("\n");
         }
     }
@@ -80,7 +92,10 @@ public:
         {
             std::scoped_lock(log_mutex);
             printf("[Error]\t");
-            printf(message, args...);
+            if constexpr (sizeof...(Args) == 0)
+                printf("%s", message);
+            else
+                printf(message, args...);
             printf("\n");
         }
     }
@@ -92,7 +107,10 @@ public:
         {
             std::scoped_lock(log_mutex);
             printf("[Critical]\t");
-            printf(message, args...);
+            if constexpr (sizeof...(Args) == 0)
+                printf("%s", message);
+            else
+                printf(message, args...);
             printf("\n");
         }
     }

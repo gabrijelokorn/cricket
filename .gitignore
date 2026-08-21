@@ -3,12 +3,16 @@ build
 conan 
 
 # input data
+input
 *.wav
 *.png
 *.npy
 assets/records/*.json
 assets/records/**/*.txt
 !assets/presentation/courship_sounds_example.png
+
+# output files
+output
 
 # models
 assets/models
@@ -20,6 +24,6 @@ assets/models
 CMakeUserPresets.json
 # CMakePresets.json
 
-# AI models
+# classification models
 # /**/*.pth
 # /**/*.pt

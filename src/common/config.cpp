@@ -15,6 +15,7 @@ bool loadConfig(const char* path) {
         gConfig.recordsPath = j.at("records_path").get<std::string>();
         gConfig.courtshipClipsPath = j.at("courtship_clips_path").get<std::string>();
         gConfig.noiseClipsPath = j.at("noise_clips_path").get<std::string>();
+        gConfig.outputPath = j.at("output_path").get<std::string>();
         gConfig.courtshipMinEvents = j.at("courtship_min_events").get<int>();
         gConfig.courtshipMaxGap = j.at("courtship_max_gap").get<double>();
         return true;

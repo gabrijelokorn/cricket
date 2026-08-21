@@ -19,6 +19,7 @@ struct Config {
     std::string recordsPath;
     std::string courtshipClipsPath;
     std::string noiseClipsPath;
+    std::string outputPath;
     ClipFormat clipFormat;
 };
 
