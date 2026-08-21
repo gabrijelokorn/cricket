@@ -51,7 +51,7 @@ std::vector<std::string> openFolderDialog()
 
     // Get the absolute path of ../assets/records relative to the executable
     std::filesystem::path exePath = std::filesystem::canonical("/proc/self/exe");
-    std::filesystem::path defaultPath = std::filesystem::weakly_canonical(exePath.parent_path() / "../assets/records");
+    std::filesystem::path defaultPath = std::filesystem::weakly_canonical(exePath.parent_path() / "../");
 
     nfdresult_t result = NFD::PickFolderMultiple(paths, defaultPath.c_str());
 

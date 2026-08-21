@@ -10,13 +10,13 @@ Software to recognize cricket courtship sounds from nature recordings.
 ### Conan
 Run the following command in project root directory:
 ```
-conan install . --build=missing -s build_type=Debug --output-folder=build
+conan install . --build=missing -s build_type=Release --output-folder=build
 ```
 
 ### Cmake build
 Run the following command in the *build* directory:
 ```
 cmake ..
-cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```

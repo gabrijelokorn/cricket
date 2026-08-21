@@ -48,7 +48,7 @@ int main(int argc, char **argv)
                 continue;
             }
 
-            std::vector<TimeInterval> positives = scanWav(w, model);
+            std::vector<ScoredClip> positives = scanWav(w, model);
             std::vector<Courtship> courtships = groupCourtships(positives);
 
             std::filesystem::path base = outputFolder / w.getRecName();
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
             writeCourtshipsCsv(courtships, base.string() + ".courtships.csv");
 
             if (saveClipsPng)
-                saveMarkedPng(w, positives, base.string() + ".clips.png");
+                saveMarkedPng(w, toTimeIntervals(positives), base.string() + ".clips.png");
             if (saveCourtshipsPng)
                 saveMarkedPng(w, toTimeIntervals(courtships), base.string() + ".courtships.png");
 

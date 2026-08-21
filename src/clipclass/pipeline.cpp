@@ -47,7 +47,7 @@ std::filesystem::path ensureOutputFolder(const std::filesystem::path &inputFolde
     return outFolder;
 }
 
-bool isCourtshipWindow(Wav &w, torch::jit::script::Module &model, int frame)
+float scoreWindow(Wav &w, torch::jit::script::Module &model, int frame)
 {
     cv::Mat clip = w.trimFrequencyRange(w.getClipAtFrame(frame));
 
@@ -57,21 +57,21 @@ bool isCourtshipWindow(Wav &w, torch::jit::script::Module &model, int frame)
         normalized = normalized.clone();
 
     torch::Tensor input = torch::from_blob(normalized.data, {1, 1, normalized.rows, normalized.cols}).clone();
-    float score = torch::sigmoid(model.forward(std::vector<torch::jit::IValue>{input}).toTensor()).item<float>();
-    return score > 0.5f;
+    return torch::sigmoid(model.forward(std::vector<torch::jit::IValue>{input}).toTensor()).item<float>();
 }
 
-std::vector<TimeInterval> scanWav(Wav &w, torch::jit::script::Module &model)
+std::vector<ScoredClip> scanWav(Wav &w, torch::jit::script::Module &model)
 {
-    std::vector<TimeInterval> positives;
+    std::vector<ScoredClip> positives;
     int numFrames = w.getWavNumTimeFrames();
 
     int i = 0;
     while (i + gConfig.eventSize <= numFrames)
     {
-        if (isCourtshipWindow(w, model, i))
+        float score = scoreWindow(w, model, i);
+        if (score > 0.5f)
         {
-            positives.push_back({w.frameToTime(i), w.frameToTime(i + gConfig.eventSize)});
+            positives.push_back({w.frameToTime(i), w.frameToTime(i + gConfig.eventSize), score});
             i += gConfig.eventSize - gConfig.eventStep;
         }
         else
@@ -83,7 +83,7 @@ std::vector<TimeInterval> scanWav(Wav &w, torch::jit::script::Module &model)
     return positives;
 }
 
-std::vector<Courtship> groupCourtships(const std::vector<TimeInterval> &positives)
+std::vector<Courtship> groupCourtships(const std::vector<ScoredClip> &positives)
 {
     std::vector<Courtship> courtships;
     if (positives.empty())
@@ -92,21 +92,21 @@ std::vector<Courtship> groupCourtships(const std::vector<TimeInterval> &positive
     double maxGap = gConfig.courtshipMaxGap / 1000.0;
 
     Courtship current;
-    current.addEvent(positives[0]);
+    current.addEvent({positives[0].start, positives[0].end});
 
     for (size_t k = 1; k < positives.size(); ++k)
     {
-        const TimeInterval &t = positives[k];
-        if (t.start - current.end > maxGap)
+        const ScoredClip &p = positives[k];
+        if (p.start - current.end > maxGap)
         {
             if ((int)current.events.size() >= gConfig.courtshipMinEvents)
                 courtships.push_back(current);
             current = Courtship();
-            current.addEvent(t);
+            current.addEvent({p.start, p.end});
         }
         else
         {
-            current.addEvent(t);
+            current.addEvent({p.start, p.end});
         }
     }
     if ((int)current.events.size() >= gConfig.courtshipMinEvents)
@@ -115,26 +115,34 @@ std::vector<Courtship> groupCourtships(const std::vector<TimeInterval> &positive
     return courtships;
 }
 
-void writeClipsCsv(const std::vector<TimeInterval> &clips, const std::filesystem::path &path)
+void writeClipsCsv(const std::vector<ScoredClip> &clips, const std::filesystem::path &path)
 {
     std::ofstream out(path);
-    out << "start_time,end_time\n";
-    for (const TimeInterval &t : clips)
-        out << std::fixed << std::setprecision(3) << t.start << "," << t.end << "\n";
+    out << "start_time,end_time,score\n";
+    for (const ScoredClip &c : clips)
+        out << std::fixed << std::setprecision(3) << c.start << "," << c.end << "," << c.score << "\n";
 }
 
 void writeCourtshipsCsv(const std::vector<Courtship> &courtships, const std::filesystem::path &path)
 {
     std::ofstream out(path);
-    out << "start_time,end_time\n";
+    out << "start_time,end_time,num_events\n";
     for (const Courtship &c : courtships)
-        out << std::fixed << std::setprecision(3) << c.start << "," << c.end << "\n";
+        out << std::fixed << std::setprecision(3) << c.start << "," << c.end << "," << c.events.size() << "\n";
 }
 
 std::vector<TimeInterval> toTimeIntervals(const std::vector<Courtship> &courtships)
 {
     std::vector<TimeInterval> spans;
     for (const Courtship &c : courtships)
+        spans.push_back({c.start, c.end});
+    return spans;
+}
+
+std::vector<TimeInterval> toTimeIntervals(const std::vector<ScoredClip> &clips)
+{
+    std::vector<TimeInterval> spans;
+    for (const ScoredClip &c : clips)
         spans.push_back({c.start, c.end});
     return spans;
 }
@@ -158,7 +166,7 @@ void saveMarkedPng(Wav &w, const std::vector<TimeInterval> &spans, const std::fi
         cv::rectangle(overlay, cv::Point(0, 0), cv::Point(overlay.cols, overlay.rows),
                       cv::Scalar(0, 255, 0), cv::FILLED);
         cv::Mat blended;
-        cv::addWeighted(overlay, 0.2, roi, 0.8, 0, blended);
+        cv::addWeighted(overlay, 0.05, roi, 0.95, 0, blended);
         blended.copyTo(roi);
     }
 
