@@ -23,6 +23,12 @@ def parse_date(rec_name):
     return rec_name.split(".")[1].split("_")[0]
 
 
+def counts(clips):
+    pos = sum(1 for c in clips if c.label == 1)
+    neg = sum(1 for c in clips if c.label == 0)
+    return pos, neg
+
+
 def load_clips_by_date(root=CLIPS_ROOT):
     clips_by_date = {}
 
