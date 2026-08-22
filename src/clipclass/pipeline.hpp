@@ -34,7 +34,8 @@ float scoreWindow(Wav &w, torch::jit::script::Module &model, int frame);
 // Slides across the whole recording. On a hit, skips ahead by (eventSize - eventStep)
 // instead of the full eventSize, so overlapping windows still catch the same event
 // continuing; on a miss, steps by eventStep for dense coverage.
-std::vector<ScoredClip> scanWav(Wav &w, torch::jit::script::Module &model);
+// threshold is resolved once by the caller via thresholdFor(modelName).
+std::vector<ScoredClip> scanWav(Wav &w, torch::jit::script::Module &model, double threshold);
 
 // Groups positive windows into courtships using courtship_max_gap / courtship_min_events.
 std::vector<Courtship> groupCourtships(const std::vector<ScoredClip> &positives);

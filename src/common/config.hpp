@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <map>
 #include <iostream>
 
 #include "json.hpp"
@@ -16,6 +17,9 @@ struct Config {
     int eventStep;
     int courtshipMinEvents;
     double courtshipMaxGap;
+    // Score cutoff per model — each model's scores are distributed differently,
+    // so one shared value would mean different things for different models.
+    std::map<std::string, double> thresholds;
     std::string recordsPath;
     std::string courtshipClipsPath;
     std::string noiseClipsPath;
@@ -28,3 +32,7 @@ extern Config gConfig;
 
 // Load function declaration
 bool loadConfig(const char* path);
+
+// Threshold for the named model. Exits with an error if it has no entry —
+// silently falling back to a default would scan with a meaningless cutoff.
+double thresholdFor(const std::string &modelName);

@@ -23,7 +23,8 @@ int main(int argc, char **argv)
     }
 
     torch::jit::script::Module model = loadModel(modelName);
-    Logger::Info("Loaded model %s.pt", modelName.c_str());
+    double threshold = thresholdFor(modelName);
+    Logger::Info("Loaded model %s.pt (threshold %.3f)", modelName.c_str(), threshold);
 
     std::vector<std::string> folders = openFolderDialog();
     if (folders.empty())
@@ -48,7 +49,7 @@ int main(int argc, char **argv)
                 continue;
             }
 
-            std::vector<ScoredClip> positives = scanWav(w, model);
+            std::vector<ScoredClip> positives = scanWav(w, model, threshold);
             std::vector<Courtship> courtships = groupCourtships(positives);
 
             std::filesystem::path base = outputFolder / w.getRecName();

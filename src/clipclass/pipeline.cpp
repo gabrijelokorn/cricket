@@ -60,7 +60,7 @@ float scoreWindow(Wav &w, torch::jit::script::Module &model, int frame)
     return torch::sigmoid(model.forward(std::vector<torch::jit::IValue>{input}).toTensor()).item<float>();
 }
 
-std::vector<ScoredClip> scanWav(Wav &w, torch::jit::script::Module &model)
+std::vector<ScoredClip> scanWav(Wav &w, torch::jit::script::Module &model, double threshold)
 {
     std::vector<ScoredClip> positives;
     int numFrames = w.getWavNumTimeFrames();
@@ -69,7 +69,7 @@ std::vector<ScoredClip> scanWav(Wav &w, torch::jit::script::Module &model)
     while (i + gConfig.eventSize <= numFrames)
     {
         float score = scoreWindow(w, model, i);
-        if (score > 0.5f)
+        if (score > threshold)
         {
             positives.push_back({w.frameToTime(i), w.frameToTime(i + gConfig.eventSize), score});
             i += gConfig.eventSize - gConfig.eventStep;

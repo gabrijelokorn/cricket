@@ -7,6 +7,9 @@
     "event_step": 4,
     "courtship_min_events": 3,
     "courtship_max_gap": 3000,
+    "thresholds": {
+        "cnn": 0.5
+    },
     "records_path": "../assets/records",
     "courtship_clips_path": "../assets/clips/courtship",
     "noise_clips_path": "../assets/clips/noise",

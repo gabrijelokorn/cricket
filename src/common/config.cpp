@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 #include "config.hpp"
 
 Config gConfig = {};
@@ -18,9 +20,20 @@ bool loadConfig(const char* path) {
         gConfig.outputPath = j.at("output_path").get<std::string>();
         gConfig.courtshipMinEvents = j.at("courtship_min_events").get<int>();
         gConfig.courtshipMaxGap = j.at("courtship_max_gap").get<double>();
+        gConfig.thresholds = j.at("thresholds").get<std::map<std::string, double>>();
         return true;
     } catch (const std::exception &e) {
         std::cerr << "Error loading config: " << e.what() << std::endl;
         return false;
     }
+}
+
+double thresholdFor(const std::string &modelName) {
+    auto it = gConfig.thresholds.find(modelName);
+    if (it == gConfig.thresholds.end()) {
+        std::cerr << "No threshold configured for model '" << modelName
+                  << "' — add it to \"thresholds\" in assets/config.json" << std::endl;
+        std::exit(1);
+    }
+    return it->second;
 }
