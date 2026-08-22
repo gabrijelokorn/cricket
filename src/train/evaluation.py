@@ -161,8 +161,6 @@ def evaluate_one(model_name):
     for fold_name, cm in confusions:
         write_confusion_matrix(cm, os.path.join(out_dir, f"{fold_name}_confusionmatrix.csv"))
 
-    return next(r for r in metric_rows if r["fold"] == "MEAN")
-
 
 def main(model_name="cnn"):
     # Note: these are architectures from models.MODELS, not the .pt files in
@@ -170,16 +168,9 @@ def main(model_name="cnn"):
     # trained on every clip, so there'd be no honest data left to score it on.
     names = sorted(MODELS) if model_name == "all" else [model_name]
 
-    summary = []
     for name in names:
         print(f"\n########## {name} ##########")
-        mean = evaluate_one(name)
-        summary.append({"model": name, **{k: mean[k] for k in METRIC_NAMES}})
-
-    if len(names) > 1:
-        print()
-        write_csv(summary, os.path.join(RESULTS_DIR, "comparison.csv"),
-                  ["model"] + METRIC_NAMES)
+        evaluate_one(name)
 
 
 if __name__ == "__main__":

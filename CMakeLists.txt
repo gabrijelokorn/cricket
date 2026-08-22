@@ -38,6 +38,7 @@ set(CLIPCLASS clipclass)
 # --- Shared library ---
 add_library(common STATIC
     src/common/Wav.cpp
+    src/common/args.cpp
     src/common/config.cpp
     src/common/gather.cpp
     src/common/logger.hpp

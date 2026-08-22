@@ -1,7 +1,6 @@
 import argparse
 
 from loader import load_clips_by_date, counts
-from strategy import loso_folds
 from dataset import ClipDataset, clip_shape, check_shapes
 from trainer import train_model, export_torchscript
 from models import MODELS
@@ -13,10 +12,12 @@ BATCH_SIZE = 16
 
 
 def main(model_name="cnn"):
+    print(f"Model: {model_name} (from models.MODELS) -> assets/models/{model_name}.pt")
+
     clips_by_date = load_clips_by_date()
     all_clips = [c for date in sorted(clips_by_date) for c in clips_by_date[date]]
 
-    print("Loaded clips per date:")
+    print("\nLoaded clips per date:")
     for date in sorted(clips_by_date):
         pos, neg = counts(clips_by_date[date])
         print(f"  {date}: {pos + neg} clips (courtship: {pos}, noise: {neg})")
@@ -30,9 +31,6 @@ def main(model_name="cnn"):
 
     shape = clip_shape(all_clips)
     print(f"\nClip shape: {shape}")
-
-    folds = loso_folds(clips_by_date)
-    print(f"LOSO: {len(folds)} fold(s) — used for evaluation, not yet wired up")
 
     # The shipped model trains on everything. Cross-validation measures how well
     # this setup generalises; it doesn't produce the model you deploy — holding a

@@ -4,6 +4,7 @@
 #include <limits>
 
 #include "Wav.hpp"
+#include "args.hpp"
 #include "config.hpp"
 #include "gather.hpp"
 #include "logger.hpp"

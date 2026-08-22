@@ -2,28 +2,43 @@
 #include <filesystem>
 
 #include "Wav.hpp"
+#include "args.hpp"
 #include "config.hpp"
 #include "gather.hpp"
 
 ClipFormat parseFormatArg(int argc, char **argv)
 {
-    for (int i = 1; i < argc; ++i)
-    {
-        std::string arg = argv[i];
-        if (arg == "--format" && i + 1 < argc)
-        {
-            std::string format = argv[i + 1];
-            if (format == "png") return ClipFormat::PNG;
-            if (format == "npy") return ClipFormat::NPY;
-            std::cerr << "Invalid --format value: " << format << " (expected 'png' or 'npy')" << std::endl;
-            std::exit(1);
-        }
-    }
-    return ClipFormat::NPY;
+    std::string format = flagValue(argc, argv, "--format", "npy");
+
+    if (format == "png") return ClipFormat::PNG;
+    if (format == "npy") return ClipFormat::NPY;
+
+    std::cerr << "Invalid --format value: " << format << " (expected 'png' or 'npy')" << std::endl;
+    std::exit(1);
+}
+
+void printUsage()
+{
+    std::cerr << "Nothing to do — pass at least one of:\n"
+              << "  --clips           export labeled courtship and noise clips\n"
+              << "  --specs           export a full spectrogram PNG per recording\n"
+              << "\nOptional:\n"
+              << "  --format png|npy  clip file format (default: npy, applies to --clips)\n";
 }
 
 int main(int argc, char **argv)
 {
+    bool exportClips = hasFlag(argc, argv, "--clips");
+    bool exportSpecs = hasFlag(argc, argv, "--specs");
+
+    // Without this the program would run the whole spectrogram computation and
+    // then write nothing, which looks like a failure rather than a missing flag.
+    if (!exportClips && !exportSpecs)
+    {
+        printUsage();
+        return 1;
+    }
+
     ClipFormat format = parseFormatArg(argc, argv);
 
     std::cout << "Hello, from ClipGen!" << std::endl;
@@ -34,8 +49,12 @@ int main(int argc, char **argv)
     }
 
     gConfig.clipFormat = format;
-    std::filesystem::create_directories(gConfig.courtshipClipsPath);
-    std::filesystem::create_directories(gConfig.noiseClipsPath);
+
+    if (exportClips)
+    {
+        std::filesystem::create_directories(gConfig.courtshipClipsPath);
+        std::filesystem::create_directories(gConfig.noiseClipsPath);
+    }
 
     for (const std::string &f : openFileDialog(gConfig.recordsPath))
     {
@@ -47,9 +66,14 @@ int main(int argc, char **argv)
         }
         Logger::Info("Successfully converted %s to spectrogram", w.getRecName().c_str());
 
-        w.exportLabeledCourtship();
-        w.exportLabeledNoise();
-        // w.exportSpectrogram();
+        if (exportClips)
+        {
+            w.exportLabeledCourtship();
+            w.exportLabeledNoise();
+        }
+
+        if (exportSpecs)
+            w.exportSpectrogram();
     }
 
     return 1;

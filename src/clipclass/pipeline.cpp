@@ -3,25 +3,12 @@
 #include <iomanip>
 
 #include "pipeline.hpp"
+#include "args.hpp"
 #include "config.hpp"
 
 std::string parseModelArg(int argc, char **argv)
 {
-    for (int i = 1; i < argc; ++i)
-    {
-        std::string arg = argv[i];
-        if (arg == "--model" && i + 1 < argc)
-            return argv[i + 1];
-    }
-    return "cnn";
-}
-
-bool hasFlag(int argc, char **argv, const std::string &flag)
-{
-    for (int i = 1; i < argc; ++i)
-        if (std::string(argv[i]) == flag)
-            return true;
-    return false;
+    return flagValue(argc, argv, "--model", "cnn");
 }
 
 torch::jit::script::Module loadModel(const std::string &modelName)

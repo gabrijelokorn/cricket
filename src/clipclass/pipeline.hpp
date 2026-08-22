@@ -19,9 +19,6 @@ struct ScoredClip
 // --model <name>: model file under assets/models, without the .pt extension. Defaults to "cnn".
 std::string parseModelArg(int argc, char **argv);
 
-// True if the given flag (e.g. "--clips") is present anywhere in argv.
-bool hasFlag(int argc, char **argv, const std::string &flag);
-
 // Loads assets/models/<modelName>.pt, exits the program on failure.
 torch::jit::script::Module loadModel(const std::string &modelName);
 
