@@ -21,7 +21,7 @@ void printUsage()
 {
     std::cerr << "Nothing to do — pass at least one of:\n"
               << "  --clips           export labeled courtship and noise clips\n"
-              << "  --specs           export a full spectrogram PNG per recording\n"
+              << "  --spectrograms           export a full spectrogram PNG per recording\n"
               << "\nOptional:\n"
               << "  --format png|npy  clip file format (default: npy, applies to --clips)\n";
 }
@@ -29,7 +29,7 @@ void printUsage()
 int main(int argc, char **argv)
 {
     bool exportClips = hasFlag(argc, argv, "--clips");
-    bool exportSpecs = hasFlag(argc, argv, "--specs");
+    bool exportSpecs = hasFlag(argc, argv, "--spectrograms");
 
     // Without this the program would run the whole spectrogram computation and
     // then write nothing, which looks like a failure rather than a missing flag.
