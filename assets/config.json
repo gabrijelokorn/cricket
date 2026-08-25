@@ -1,8 +1,8 @@
 {
-    "clip_min_freq": 10000,
+    "clip_min_freq": 5000,
     "clip_max_freq": 24000,
-    "window_size": 1024,
-    "overlap_size": 768,
+    "window_size": 256,
+    "overlap_size": 128,
     "event_size": 24,
     "event_step": 4,
     "courtship_min_events": 3,
