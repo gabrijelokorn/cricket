@@ -5,7 +5,7 @@
     "overlap_size": 128,
     "event_size": 24,
     "event_step": 4,
-    "courtship_min_events": 3,
+    "courtship_min_events": 2,
     "courtship_max_gap": 3000,
     "thresholds": {
         "cnn": 0.5
