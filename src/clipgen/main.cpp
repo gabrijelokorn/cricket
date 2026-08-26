@@ -20,7 +20,7 @@ ClipFormat parseFormatArg(int argc, char **argv)
 void printUsage()
 {
     std::cerr << "Nothing to do — pass at least one of:\n"
-              << "  --clips           export labeled courtship and noise clips\n"
+              << "  --clips           export labeled tick and noise clips\n"
               << "  --spectrograms           export a full spectrogram PNG per recording\n"
               << "\nOptional:\n"
               << "  --format png|npy  clip file format (default: npy, applies to --clips)\n";
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
     if (exportClips)
     {
-        std::filesystem::create_directories(gConfig.courtshipClipsPath);
+        std::filesystem::create_directories(gConfig.ticksClipsPath);
         std::filesystem::create_directories(gConfig.noiseClipsPath);
     }
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 
         if (exportClips)
         {
-            w.exportLabeledCourtship();
+            w.exportLabeledTicks();
             w.exportLabeledNoise();
         }
 

@@ -189,9 +189,9 @@ void Wav::exportLabeledClips(const std::vector<TimeInterval> &labeled, const std
     Logger::Info("Exported %d clips from %s to %s", count, this->getRecPath().c_str(), outDir.c_str());
 }
 
-void Wav::exportLabeledCourtship()
+void Wav::exportLabeledTicks()
 {
-    this->exportLabeledClips(this->mLabeledCourtship, gConfig.courtshipClipsPath);
+    this->exportLabeledClips(this->mLabeledTicks, gConfig.ticksClipsPath);
 }
 
 void Wav::exportLabeledNoise()
@@ -280,9 +280,9 @@ Wav::Wav(const std::string &rPath)
 
         this->setRecPath(wav_json.at("rec_path").get<std::string>());
 
-        if (wav_json.contains("courtship"))
-            for (auto &entry : wav_json["courtship"])
-                this->mLabeledCourtship.push_back({entry["start_time"], entry["end_time"]});
+        if (wav_json.contains("ticks"))
+            for (auto &entry : wav_json["ticks"])
+                this->mLabeledTicks.push_back({entry["start_time"], entry["end_time"]});
 
         if (wav_json.contains("noise"))
             for (auto &entry : wav_json["noise"])

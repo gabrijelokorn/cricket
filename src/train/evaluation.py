@@ -54,7 +54,7 @@ def metrics_from_confusion(tn, fp, fn, tp):
 
     accuracy = (tp + tn) / total if total else 0.0
 
-    recall = tp / (tp + fn) if (tp + fn) else 0.0        # of real courtships, how many found
+    recall = tp / (tp + fn) if (tp + fn) else 0.0        # of real ticks, how many found
     specificity = tn / (tn + fp) if (tn + fp) else 0.0   # of real noise, how much correctly ignored
     balanced_accuracy = (recall + specificity) / 2       # accuracy's baseline moves with class
                                                          # balance; this one always baselines at 0.5
@@ -141,9 +141,9 @@ def write_confusion_matrix(cm, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["", "predicted_noise", "predicted_courtship"])
+        writer.writerow(["", "predicted_noise", "predicted_tick"])
         writer.writerow(["actual_noise", tn, fp])
-        writer.writerow(["actual_courtship", fn, tp])
+        writer.writerow(["actual_tick", fn, tp])
     print(f"wrote {path}")
 
 

@@ -24,7 +24,7 @@ def train_model(train_loader, model_name="cnn", epochs=25, lr=1e-3, device=None,
     pos = sum(1 for c in clips if c.label == 1)
     neg = len(clips) - pos
 
-    # Folds can be lopsided (one of yours trains on 943 courtship vs 1336 noise).
+    # Folds can be lopsided (one of yours trains on 943 tick vs 1336 noise).
     # pos_weight scales the positive class's share of the loss so the model can't
     # score well just by leaning toward whichever class happens to be commoner.
     pos_weight = torch.tensor([neg / max(pos, 1)], device=device)

@@ -15,7 +15,7 @@ def group_by_recording(clips_by_date):
 
 
 def print_group(title, groups):
-    print(f"{title:<24} {'courtship':>10} {'noise':>8} {'total':>8}")
+    print(f"{title:<24} {'ticks':>10} {'noise':>8} {'total':>8}")
     print("-" * 52)
 
     tot_pos = tot_neg = 0

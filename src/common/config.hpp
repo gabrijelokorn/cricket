@@ -21,7 +21,7 @@ struct Config {
     // so one shared value would mean different things for different models.
     std::map<std::string, double> thresholds;
     std::string recordsPath;
-    std::string courtshipClipsPath;
+    std::string ticksClipsPath;
     std::string noiseClipsPath;
     std::string outputPath;
     ClipFormat clipFormat;

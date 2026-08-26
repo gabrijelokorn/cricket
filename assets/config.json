@@ -11,7 +11,7 @@
         "cnn": 0.5
     },
     "records_path": "../assets/records",
-    "courtship_clips_path": "../assets/clips/courtship",
+    "ticks_clips_path": "../assets/clips/ticks",
     "noise_clips_path": "../assets/clips/noise",
     "output_path": "../output"
 }

@@ -15,7 +15,7 @@ bool loadConfig(const char* path) {
         gConfig.eventStep = j.at("event_step").get<int>();
         gConfig.hopSize = gConfig.windowSize - gConfig.overlapSize;
         gConfig.recordsPath = j.at("records_path").get<std::string>();
-        gConfig.courtshipClipsPath = j.at("courtship_clips_path").get<std::string>();
+        gConfig.ticksClipsPath = j.at("ticks_clips_path").get<std::string>();
         gConfig.noiseClipsPath = j.at("noise_clips_path").get<std::string>();
         gConfig.outputPath = j.at("output_path").get<std::string>();
         gConfig.courtshipMinEvents = j.at("courtship_min_events").get<int>();

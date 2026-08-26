@@ -8,7 +8,7 @@ CLIPS_ROOT = os.path.join(SCRIPT_DIR, "..", "..", "assets", "clips")
 @dataclass
 class Clip:
     path: str
-    label: int  # 1 = courtship, 0 = noise
+    label: int  # 1 = tick, 0 = noise
     rec_name: str
 
 
@@ -32,7 +32,7 @@ def counts(clips):
 def load_clips_by_date(root=CLIPS_ROOT):
     clips_by_date = {}
 
-    for label, folder in enumerate(["noise", "courtship"]):
+    for label, folder in enumerate(["noise", "ticks"]):
         folder_path = os.path.join(root, folder)
         for filename in os.listdir(folder_path):
             if not filename.lower().endswith(".npy"):

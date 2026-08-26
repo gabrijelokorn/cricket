@@ -20,7 +20,7 @@ def main(model_name="cnn"):
     print("\nLoaded clips per date:")
     for date in sorted(clips_by_date):
         pos, neg = counts(clips_by_date[date])
-        print(f"  {date}: {pos + neg} clips (courtship: {pos}, noise: {neg})")
+        print(f"  {date}: {pos + neg} clips (ticks: {pos}, noise: {neg})")
 
     shapes = check_shapes(all_clips)
     if len(shapes) > 1:
@@ -36,7 +36,7 @@ def main(model_name="cnn"):
     # this setup generalises; it doesn't produce the model you deploy — holding a
     # date out of the final model would just throw away data for no benefit.
     pos, neg = counts(all_clips)
-    print(f"\nTraining on all {len(all_clips)} clips (courtship: {pos}, noise: {neg})")
+    print(f"\nTraining on all {len(all_clips)} clips (ticks: {pos}, noise: {neg})")
 
     loader = DataLoader(ClipDataset(all_clips), batch_size=BATCH_SIZE, shuffle=True)
     model = train_model(loader, model_name=model_name, epochs=EPOCHS)

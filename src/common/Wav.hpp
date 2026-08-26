@@ -69,7 +69,7 @@ private:
     std::vector<double> mSoundData;
     cv::Mat mSpec;
 
-    std::vector<TimeInterval> mLabeledCourtship;
+    std::vector<TimeInterval> mLabeledTicks;
     std::vector<TimeInterval> mLabeledNoise;
 
 public:
@@ -105,7 +105,7 @@ public:
     void setWavDuration(int duration) { mWavDuration = duration; }
     int getWavDuration() const { return mWavDuration; }
 
-    std::vector<TimeInterval> getLabeledCourtship() const { return mLabeledCourtship; }
+    std::vector<TimeInterval> getLabeledTicks() const { return mLabeledTicks; }
     std::vector<TimeInterval> getLabeledNoise() const { return mLabeledNoise; }
 
     // Conversions
@@ -121,7 +121,7 @@ public:
     cv::Mat getClipByFrameInterval(FrameInterval fi);
     cv::Mat getClipByTimeInterval(TimeInterval ti);
     void exportSpectrogram();
-    void exportLabeledCourtship();
+    void exportLabeledTicks();
     void exportLabeledNoise();
 
     bool getSpec();
